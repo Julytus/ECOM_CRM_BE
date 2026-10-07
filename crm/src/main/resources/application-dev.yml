@@ -1,0 +1,30 @@
+server:
+  port: ${BACKEND_PORT:9100}
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/crm_jlt?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    username: root
+    password: ${MYSQL_ROOT_PASSWORD:root}
+
+logging:
+  level:
+    org:
+      jooq: DEBUG
+
+
+rag:
+  webhook:
+    sync: "http://localhost:5678/webhook/rag-sync"
+    generate: "http://localhost:5678/webhook/customer/ai/generate-strategy"
+
+
+minio:
+  endpoint: http://localhost:9000
+  bucket: ${MINIO_BUCKET:crm}
+  access-key: ${MINIO_ROOT_USER:minioadmin}
+  secret-key: ${MINIO_ROOT_PASSWORD:minioadmin}
+
+system:
+  enabled-register: true
+  file-url: http://localhost:9000

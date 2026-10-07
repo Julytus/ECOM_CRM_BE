@@ -1,0 +1,540 @@
+{
+  "name": "RAG",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-goog-api-key",
+              "value": "={{$json.apiKey}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n{\n  contents: [\n    {\n      parts: [\n        {\n          text: $json.prompt\n        }\n      ]\n    }\n  ]\n}\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2208,
+        -32
+      ],
+      "id": "aa75ae65-f9cd-4d5a-aaf9-7fad866a6c92",
+      "name": "Generate",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://ollama:11434/api/embeddings",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"model\": \"nomic-embed-text\",\n  \"prompt\": \"{{$json.query}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1072,
+        -256
+      ],
+      "id": "6a665a85-af4b-4565-8ce9-e8758de36fb0",
+      "name": "Embed Prompt"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://qdrant:6333/collections/crm_entities/points/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n{\n  vector: $json.embedding,\n  limit: 10,\n  with_payload: true,\n  filter: {\n    must: [\n      {\n        key: \"status\",\n        match: { value: 1 }\n      },\n      {\n        key: \"type\",\n        match: {\n          any: [\"product\", \"service\", \"voucher\"]\n        }\n      }\n    ],\n    should: [\n      {\n        key: \"branchId\",\n        match: {\n          value: $('Customer Prompt Prepare').item.json.profile.branchId\n        }\n      },\n      {\n        key: \"branchId\",\n        match: {\n          value: 0\n        }\n      },\n{\n \"is_null\": {\n    \"key\": \"branchId\"\n  }\n}\n    ]\n  }\n}\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1232,
+        -256
+      ],
+      "id": "948da95b-5776-4f95-aad3-d4e36eae1543",
+      "name": "Search Related Points"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/customer/ai/generate-strategy",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        544,
+        -256
+      ],
+      "id": "45deb269-33ef-4d24-ae22-207b6fc8cdee",
+      "name": "Webhook",
+      "webhookId": "a4166e7e-5853-49f1-94d1-9d537736b699"
+    },
+    {
+      "parameters": {
+        "url": "=http://backend:8088/customer/ai/{{ $json.body.id }}/context",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "admin_api_key"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        736,
+        -256
+      ],
+      "id": "416bdd60-4c02-46ba-88c8-ea565471d058",
+      "name": "Get User Profile"
+    },
+    {
+      "parameters": {
+        "jsCode": "const profile = $input.first().json.result.profile;\n\nconst query = `\nCRM_INTENT: LOYAL customer optimization\n\nOBJECTIVE:\nincrease_frequency + cross_sell + retention_balance\n\nCUSTOMER:\nsegment=${profile.segment}\nbranchId=${profile.branchId}\nspend=${profile.monetary90d}\nfrequency=${profile.frequency90d}\n`.trim();\n\nreturn [{ query, profile }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        -256
+      ],
+      "id": "1ad8030e-b69a-4a39-a25b-5aa2b29a076e",
+      "name": "Customer Prompt Prepare"
+    },
+    {
+      "parameters": {
+        "jsCode": "const profile = $('Get User Profile').first().json.result.profile;\nconst segment = profile.segment;\n\nlet strategyRule = \"\";\nlet policy = {};\n\nswitch (segment) {\n  case \"VIP\":\n    strategyRule = \"Ưu tiên dịch vụ cao cấp, không giảm giá mạnh, tập trung trải nghiệm.\";\n    policy = {\n      goal: \"increase_ltv\",\n      discountAllowed: \"low\",\n      focus: [\"service\", \"experience\"]\n    };\n    break;\n\n  case \"LOYAL\":\n    strategyRule = \"Tăng tần suất mu, ưu tiên combo và cross-sell.\";\n    policy = {\n      goal: \"increase_frequency\",\n      discountAllowed: \"medium\",\n      focus: [\"service\", \"product\", \"cross_sell\"]\n    };\n    break;\n\n  case \"POTENTIAL\":\n    strategyRule = \"Kích hoạt mua lại bằng voucher nhẹ và sản phẩm entry.\";\n    policy = {\n      goal: \"activate_conversion\",\n      discountAllowed: \"medium_high\",\n      focus: [\"product\", \"voucher\"]\n    };\n    break;\n\n  case \"AT_RISK\":\n    strategyRule = \"Giữ chân khách hàng bằng ưu đãi mạnh và chăm sóc dịch vụ.\";\n    policy = {\n      goal: \"reduce_churn\",\n      discountAllowed: \"high\",\n      focus: [\"voucher\", \"service\"]\n    };\n    break;\n\n  case \"CHURNED\":\n    strategyRule = \"Win-back bằng giảm giá mạnh và chiến dịch tái kích hoạt.\";\n    policy = {\n      goal: \"win_back\",\n      discountAllowed: \"very_high\",\n      focus: [\"voucher\"]\n    };\n    break;\n\n  default:\n    strategyRule = \"Chiến lược mặc định cân bằng tăng trưởng.\";\n    policy = {\n      goal: \"general_growth\",\n      discountAllowed: \"medium\",\n      focus: [\"service\", \"product\", \"voucher\"]\n    };\n    break;\n}\n\nreturn [\n  {\n    strategyRule,\n    policy,\n    segment\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1392,
+        -256
+      ],
+      "id": "d307dc74-d56e-4b17-80ed-c2efa296a2b9",
+      "name": "Segment Policy"
+    },
+    {
+      "parameters": {
+        "jsCode": "const profile = $('Get User Profile').first().json.result.profile;\nconst enriched = $input.first().json.enriched;\nconst segmentPolicyNode = $('Segment Policy').first().json;\nconst policy = segmentPolicyNode.policy || {};\nconst strategyRule = segmentPolicyNode.strategyRule || \"\";\nconst safeFocus = Array.isArray(policy.focus) ? policy.focus : [];\n\nconst typeLabel = (type) => ({\n  service: \"Dịch vụ\",\n  product: \"Sản phẩm\",\n  voucher: \"Voucher\"\n}[type] || type);\n\nconst roleLabel = (role) => ({\n  revenue_driver: \"Revenue Driver\",\n  cross_sell: \"Cross-sell\",\n  retention: \"Retention\"\n}[role] || role);\n\nconst prompt = `Bạn là trợ lý CRM cho đội sale và chăm sóc khách hàng tại chi nhánh.\nNhiệm vụ của bạn là đọc thông tin khách hàng, hiểu họ đang ở phân khúc nào, và đề xuất cách chăm sóc/bán hàng dễ hiểu, thực tế, có thể làm ngay.\n\n==================== YÊU CẦU ====================\n1. NGÔN NGỮ VÀ CHÍNH TẢ (BẮT BUỘC):\n- Viết bằng tiếng Việt thuần túy, rõ ràng, ngắn gọn, dễ hiểu cho nhân viên bán hàng (sale) và nhân viên chăm sóc khách hàng (CSKH).\n- Kiểm tra kỹ từng từ để đảm bảo viết đúng chính tả tiếng Việt, không dính chữ, không sai dấu, không lỗi font.\n- Sử dụng các thuật ngữ mô tả trực tiếp bằng tiếng Việt. Thay thế hoàn toàn các từ tiếng Anh nếu có từ tiếng Việt tương đương (Ví dụ: dùng \"Tỷ lệ khách hàng rời bỏ\" thay cho \"Churn rate\", \"Giá trị trọn đời của khách hàng\" thay cho \"LTV\", \"Phần thưởng/Mã giảm giá\" thay cho \"Voucher\").\n\n2. NỘI DUNG VÀ DỮ LIỆU:\n- Không bịa thêm dữ liệu, con số hoặc thông tin nằm ngoài phạm vi đã được cung cấp.\n- Chỉ đề xuất những chiến lược phù hợp với chính sách của hệ thống (system policy).\n- Ưu tiên các giải pháp thực tế, dễ áp dụng trực tiếp tại chi nhánh hoặc cửa hàng.\n\n3. QUY ĐỊNH VỀ MÃ GIẢM GIÁ (VOUCHER):\n- Chỉ dùng phần thưởng/mã giảm giá khi chính sách hệ thống cho phép.\n- Nếu không phù hợp với trường hợp này, phải ghi rõ ràng cụm từ: “Không sử dụng voucher”.\n\nHãy suy nghĩ từng bước và kiểm tra lại văn phong, chính tả tiếng Việt trước khi đưa ra câu trả lời cuối cùng.\n\n==================== THÔNG TIN KHÁCH HÀNG ====================\nPhân khúc: ${profile.segment}\nChi tiêu 90 ngày gần nhất: ${profile.monetary90d || 'N/A'} VND\nTần suất mua 90 ngày: ${profile.frequency90d || 'N/A'} lần\nSố ngày từ lần mua gần nhất: ${profile.recencyDays || 'N/A'} ngày\n\nLịch sử mua gần đây:\n${profile.recentPurchases ? profile.recentPurchases.map(p => `- ${p.name} (${p.value} VND)`).join('\\n') : 'Chưa có dữ liệu chi tiết'}\n\n==================== ĐỊNH HƯỚNG HỆ THỐNG ====================\n${strategyRule}\n\nMục tiêu chính: ${policy.goal || \"Tăng tần suất mua và giữ chân khách hàng\"}\nMức giảm giá cho phép: ${policy.discountAllowed || \"medium\"}\nNhóm ưu tiên: ${safeFocus.join(\", \") || \"retention, cross_sell, revenue_driver\"}\n\n==================== DANH SÁCH SẢN PHẨM / DỊCH VỤ / VOUCHER ĐÃ CHUẨN BỊ ====================\n${enriched.map(i => `#${i.rank} | ${i.type} | ${i.name} | ${i.role}`).join(\"\\n\")}\n\n==================== CÁCH PHÂN TÍCH ====================\nHãy trả lời theo hướng:\n1. Khách này là ai, đang ở tình trạng nào.\n2. Có thể bán thêm gì, chăm sóc gì, nhắc mua lại gì.\n3. Nên ưu tiên service, product hay voucher.\n4. Sale/CSKH nên làm gì ngay trong 3-4 bước đơn giản.\n5. Cách theo dõi kết quả sau khi triển khai.\n\n==================== ĐỊNH DẠNG ĐẦU RA BẮT BUỘC ====================\nQUY TẮC BẮT BUỘC:\n- Chỉ trả về đúng nội dung theo cấu trúc bên dưới. Không thêm lời chào, dẫn nhập, giải thích hay markdown (không in đậm **, không tiêu đề #, không bọc code block).\n- Viết tiếng Việt, ngắn gọn, thực tế, để sale/CSKH đọc và làm theo được ngay, tránh ngôn ngữ quảng cáo sáo rỗng.\n- Chỉ được nhắc tới service/product/voucher CÓ trong dữ liệu đầu vào. Không tự bịa tên mới. Nếu dữ liệu không đủ, ghi \"Không có\" hoặc \"Chưa đủ dữ liệu\" thay vì suy đoán.\n- Mục trong \"GỢI Ý HÀNH ĐỘNG\" phải khớp với mục xếp hạng cao nhất theo từng loại ở \"CHIẾN LƯỢC PHÙ HỢP NHẤT\" bên dưới, không mâu thuẫn nhau.\n\nCRM_STRATEGY_V3\nPHÂN KHÚC: ${profile.segment}\nMỤC TIÊU: ${policy.goal || \"Tăng tần suất mua và giữ chân khách hàng\"}\n\nTÓM TẮT KHÁCH HÀNG:\n[3-5 câu. Bắt buộc nêu: (1) tần suất/số lần mua gần đây, (2) thời điểm mua gần nhất, (3) cơ hội chăm sóc/bán thêm rõ ràng nhất. Diễn giải thành nhận định, không liệt kê số liệu thô.]\n\nGỢI Ý HÀNH ĐỘNG:\n1. Dịch vụ: [tên service, hoặc \"Không có\"]\n   Lý do: [1 câu]\n2. Sản phẩm: [tên product, hoặc \"Không có\"]\n   Lý do: [1 câu]\n3. Voucher: [tên voucher, hoặc \"Không sử dụng voucher\"]\n   Lý do: [1 câu]\n\nCHIẾN LƯỢC PHÙ HỢP NHẤT:\n${enriched?.length > 0\n  ? enriched.map(i => \n      `#${i.rank} · ${typeLabel(i.type)}: ${i.name}\\n   Vai trò: ${roleLabel(i.role)}\\n   → [lý do ngắn gọn, dễ hiểu cho sale/CSKH]`\n    ).join(\"\\n\\n\")\n  : \"Không có dữ liệu chiến lược phù hợp — chỉ dựa vào TÓM TẮT KHÁCH HÀNG để tư vấn chung.\"}\n\nHƯỚNG TRIỂN KHAI CHO SALE / CSKH:\n[3-4 bước, mỗi bước 1 dòng, theo mẫu \"Ngày X: hành động\". Chỉ chọn trong: gọi điện, nhắn Zalo, hẹn chi nhánh, gửi voucher (nếu có ở trên). Bước cuối luôn là mốc nhắc lại nếu khách chưa phản hồi.]\n\nCÁCH THEO DÕI KẾT QUẢ:\n[2-3 chỉ số, mỗi chỉ số kèm mốc thời gian cụ thể. Ví dụ: đơn hàng mới trong 7/30 ngày, tỷ lệ phản hồi gọi điện/Zalo, số lần quay lại chi nhánh trong 30 ngày.]\n\nKPI DỰ KIẾN (ước tính định hướng, không phải số cam kết):\n- Tăng tần suất mua: [khoảng %, ví dụ \"8-12%\"]\n- Doanh thu dự kiến tăng thêm: [khoảng %, hoặc VNĐ nếu có dữ liệu giá trị đơn trung bình]\n\n==================== QUY TẮC VIẾT ====================\n- Viết ngắn gọn, dễ hiểu, giống cách nhân viên sale/CSKH đọc để làm ngay.\n- Không dùng thuật ngữ quá học thuật.\n- Không viết dài dòng.\n- Không thêm nội dung ngoài các mục ở trên.`;\n\nreturn [{ prompt }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1744,
+        -32
+      ],
+      "id": "d691833a-b100-437d-8e00-1f255349c700",
+      "name": "Prompt Prepare"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $('Search Related Points').first().json.result;\n\nconst profile = $('Get User Profile').first().json.result.profile;\n\nfunction score(item) {\n  const p = item.payload;\n\n  let s = item.score || 0;\n\n  // base type logic\n  if (p.type === \"service\") s += 0.4;\n  if (p.type === \"product\") s += 0.2;\n  if (p.type === \"voucher\") s -= 0.1;\n\n  // segment logic\n  if (profile.segment === \"LOYAL\") {\n    if (p.type === \"service\") s += 0.3;\n    if (p.type === \"product\") s += 0.15;\n  }\n\n  // frequency logic\n  if (profile.frequency90d > 5) {\n    if (p.type === \"service\") s += 0.2;\n  }\n\n  return s;\n}\n\nconst ranked = items\n  .map(i => ({\n    ...i,\n    businessScore: score(i)\n  }))\n  .sort((a, b) => b.businessScore - a.businessScore);\n\nreturn [{ ranked }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1536,
+        -256
+      ],
+      "id": "f22f791b-62f6-4c24-a188-d9a832630255",
+      "name": "Business Scoring"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ranked = $input.first().json.ranked;\n\nconst revenue = ranked.find(i => i.payload.type === \"service\");\nconst crossSell = ranked.find(i => i.payload.type === \"product\");\nconst retention = ranked.find(i => i.payload.type === \"voucher\");\n\nconst portfolio = [revenue, crossSell, retention]\n  .filter(Boolean);\n\nreturn [{ portfolio }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1696,
+        -256
+      ],
+      "id": "f736035f-56e0-4f3d-9f7c-f0d6e780451a",
+      "name": "Portfolio Builder"
+    },
+    {
+      "parameters": {
+        "jsCode": "const portfolio = $input.first().json.portfolio;\n\nconst enriched = portfolio.map((i, idx) => {\n  const p = i.payload;\n\n  let role = \"unknown\";\n\n  if (p.type === \"service\") role = \"revenue_driver\";\n  if (p.type === \"product\") role = \"cross_sell\";\n  if (p.type === \"voucher\") role = \"retention\";\n\n  return {\n    rank: idx + 1,\n    type: p.type,\n    name: p.name || p.code,\n    role\n  };\n});\n\nreturn [{ enriched }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1840,
+        -256
+      ],
+      "id": "c98813ef-68e8-45f7-8550-2de85bf57a43",
+      "name": "Enrich"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:8088/campaignSnapshot/update",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "admin_api_key"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\ncampaign: $json.candidates[0].content.parts[0].text,\ncustomerId: $('Webhook').item.json.body.id\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2448,
+        -160
+      ],
+      "id": "fe15edcc-e512-468e-8a2c-b6deb9297ec5",
+      "name": "Save Strategy"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:8088/campaignSnapshot/fail",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "admin_api_key"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "customerId",
+              "value": "={{ $('Webhook').item.json.body.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2448,
+        80
+      ],
+      "id": "acd43b77-9142-4fbc-a565-bb2bfbb83c5d",
+      "name": "Fail"
+    },
+    {
+      "parameters": {
+        "jsCode": "const apiKeys = [\n  \"AIzaSyDMW6P3Q0miY-atq2lkimgSnDLs9-z5VHU\",\n  \"AQ.Ab8RN6JU_is5qhqWSsoIWjLizLUvnnr-4Mx1e5mvfTNZZ8RVMA\",\n  \"AQ.Ab8RN6KuDRJAsf7i7A_dvpysYY3xOG7LoQJFQQ_mwDsEwN474g\"\n];\n\nconst randomKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];\n\nreturn [\n  {\n    json: {\n      ...$input.first().json,\n      apiKey: randomKey\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1952,
+        -32
+      ],
+      "id": "18e1cfce-5304-4b0f-bdc0-ba32293137b1",
+      "name": "Get API Key from pool"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ollama.com/api/generate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer 23e463052b2c4c9eac4317d5ae85a46c.F3etiu0ISjfo3KbNMgoytJju"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ \n{\n  \"model\": \"nemotron-3-super\",\n  \"prompt\": $json.prompt,\n  \"stream\": false,\n  \"think\": true,\n  \"options\": {\n    \"num_predict\": 8192,\n    \"temperature\": 0.3,\n    \"top_p\": 0.6\n  }\n} \n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1952,
+        256
+      ],
+      "id": "a5a6d6f9-3b1c-4861-a451-2e8f2519b26d",
+      "name": "Ollama Cloud Generate",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "content": "## Phần không nối vào là các node generate cũ của hệ thống sử dụng gemini",
+        "height": 192
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1184,
+        16
+      ],
+      "typeVersion": 1,
+      "id": "d6358cee-9a49-4932-97c0-3dd0c6e5f6ac",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:8088/campaignSnapshot/update",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "admin_api_key"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\ncampaign: $json.response,\ncustomerId: $('Webhook').item.json.body.id\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2224,
+        192
+      ],
+      "id": "10edc22a-a7f1-4bf8-aa5a-c6a98897cc0a",
+      "name": "Save Strategy New"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:8088/campaignSnapshot/fail",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "admin_api_key"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "customerId",
+              "value": "={{ $('Webhook').item.json.body.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2224,
+        384
+      ],
+      "id": "3c36b7c0-9675-4257-8bd5-a8b2fa97dcb2",
+      "name": "Fail New"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Embed Prompt": {
+      "main": [
+        [
+          {
+            "node": "Search Related Points",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Related Points": {
+      "main": [
+        [
+          {
+            "node": "Segment Policy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get User Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get User Profile": {
+      "main": [
+        [
+          {
+            "node": "Customer Prompt Prepare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer Prompt Prepare": {
+      "main": [
+        [
+          {
+            "node": "Embed Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Segment Policy": {
+      "main": [
+        [
+          {
+            "node": "Business Scoring",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Business Scoring": {
+      "main": [
+        [
+          {
+            "node": "Portfolio Builder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Portfolio Builder": {
+      "main": [
+        [
+          {
+            "node": "Enrich",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrich": {
+      "main": [
+        [
+          {
+            "node": "Prompt Prepare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prompt Prepare": {
+      "main": [
+        [
+          {
+            "node": "Get API Key from pool",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate": {
+      "main": [
+        [
+          {
+            "node": "Save Strategy",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get API Key from pool": {
+      "main": [
+        [
+          {
+            "node": "Generate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Cloud Generate": {
+      "main": [
+        [
+          {
+            "node": "Save Strategy New",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fail New",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "cb155c31-f0f9-4e16-bfd1-ca04e71082b7",
+  "meta": {
+    "instanceId": "bd2a011e8616ea6825c26de6595127362f820297038c3f85c8e9aab5e6c24652"
+  },
+  "id": "sWKOqGkfUm63mG0d",
+  "tags": []
+}

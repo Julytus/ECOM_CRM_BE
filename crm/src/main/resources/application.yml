@@ -1,0 +1,114 @@
+server:
+  servlet:
+    context-path: /api
+
+spring:
+  output:
+    ansi:
+      enabled: ALWAYS
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2s
+      lettuce:
+        pool:
+          enabled: true
+          max-active: 32
+          max-idle: 16
+          min-idle: 4
+          max-wait: 500ms
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: iamapooritstuden@gmail.com
+    password: "ageo kjas ukea jbse"
+    properties:
+        mail:
+            smtp:
+            auth: true
+            starttls:
+                enable: true
+
+logging:
+  level:
+    org.jooq.tools.LoggerListener: OFF
+    org.jooq.Constants: OFF
+#    root: OFF
+#    vn.aeoc: INFO
+
+security:
+  enabled: true
+  jwt:
+    enabled: true
+    secret-key: Tuandeptraibodoithe@/~matkhaubimatsieumanh
+    header: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+    expired-in: 15552000000
+  api-key:
+    value: ${API_KEY:admin_api_key}
+
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://minio:9000}
+  bucket: ${MINIO_BUCKET:crm}
+  access-key: ${MINIO_ROOT_USER:minioadmin}
+  secret-key: ${MINIO_ROOT_PASSWORD:minioadmin}
+
+socketio:
+  host: 0.0.0.0
+  port: ${SOCKET_IO_PORT:9090}
+
+payos:
+  client-id: ed17ddc1-63a3-4644-9ef4-5298e51f3d53
+  api-key: 16240bbc-b550-44c0-8aa4-f9aeff7ca93a
+  checksum-key: dc3bb2f3b3561e30b99eaacbd5781e579f48d79f8a84cde165e48ebb5de026c6
+  api-url: https://api-merchant.payos.vn/v2/payment-requests
+
+rag:
+  webhook:
+    sync: "http://n8n:5678/webhook/rag-sync"
+    generate: "http://n8n:5678/webhook/customer/ai/generate-strategy"
+
+app:
+  name: Base Backend
+  version: 1.0.0
+  cache:
+    template:
+      l1-max-size: 50000
+      l1-ttl: 2m
+      redis-ttl: 10m
+      lock-ttl: 10s
+      wait-timeout: 2s
+      wait-poll-interval: 60ms
+      single-flight-timeout: 5s
+  rate-limit:
+    enabled: true
+    max-requests: 120
+    window: 30s
+  segment:
+    enabled: true
+    full-cron: "0 0 1 * * ?"
+    recency-weight: 0.4
+    frequency-weight: 0.3
+    monetary-weight: 0.3
+    vip-score-threshold: 4.2
+    loyal-score-threshold: 3.4
+    potential-score-threshold: 2.5
+    churn-recency-day s: 180
+    monetary-tier5: 50000000
+    monetary-tier4: 20000000
+    monetary-tier3: 7000000
+    monetary-tier2: 1000000
+    recompute-chunk-size: 5000
+    recompute-chunk-sleep-ms: 50
+
+system:
+  enabled-register: true
+  file-url: https://be.aeoc.io.vn/s3/

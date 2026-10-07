@@ -1,0 +1,17 @@
+server:
+  port: ${BACKEND_PORT:9100}
+
+logging:
+  level:
+    org:
+      jooq: DEBUG
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/crm_jlt?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    username: root
+    password: ${MYSQL_ROOT_PASSWORD:root}
+
+
+system:
+  enabled-register: true

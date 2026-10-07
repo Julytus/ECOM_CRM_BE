@@ -1,0 +1,1 @@
+docker run -d --name cloudflared --restart unless-stopped --add-host host.docker.internal:host-gateway cloudflare/cloudflared:latest tunnel run --token eyJhIjoiZDMzM2IxZDdkZjc1NDIwZTNhMmQ1ZDE4OTU1MDc0YzciLCJ0IjoiZDQ4N2NkNGUtZjJiNC00ZWNhLTgyYjAtMzI2MDMxMDM4YWM5IiwicyI6IlptWTROVGxsTnpFdE1tUXdaaTAwTmpabUxXSmtOV0l0TkRGaE5tRXlZall4TWpZMyJ9
