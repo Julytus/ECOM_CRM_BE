@@ -5,7 +5,7 @@ import org.jooq.impl.TableImpl;
 import org.springframework.stereotype.Repository;
 import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.repo.AbsMysqlRepository;
-import vn.aeoc.entity.data.mysql.CampaignSnapshot;
+import vn.aeoc.entity.data.mysql.customer.CampaignSnapshot;
 import vn.entity.backend.tables.records.CampaignSnapshotRecord;
 
 import java.util.Arrays;

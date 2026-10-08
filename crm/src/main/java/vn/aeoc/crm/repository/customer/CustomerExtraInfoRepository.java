@@ -6,7 +6,7 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
 import org.springframework.stereotype.Repository;
 import vn.aeoc.base.repo.AbsMysqlRepository;
-import vn.aeoc.entity.data.mysql.CustomerExtraInfo;
+import vn.aeoc.entity.data.mysql.customer.CustomerExtraInfo;
 import vn.entity.backend.tables.records.CustomerExtraInfoRecord;
 
 import java.util.ArrayList;

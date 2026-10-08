@@ -12,7 +12,7 @@ import vn.aeoc.base.util.CommonUtils;
 import vn.aeoc.crm.constant.InvoiceConstant;
 import vn.aeoc.crm.data.pojo.Purchase;
 import vn.aeoc.crm.util.BranchFilter;
-import vn.aeoc.entity.data.mysql.BoughtProduct;
+import vn.aeoc.entity.data.mysql.sale.BoughtProduct;
 import vn.entity.backend.tables.records.BoughtProductRecord;
 
 import java.util.*;

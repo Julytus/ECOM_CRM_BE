@@ -3,7 +3,7 @@ package vn.aeoc.crm.repository.sale;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-import vn.aeoc.entity.data.mysql.Payment;
+import vn.aeoc.entity.data.mysql.sale.Payment;
 
 import static vn.entity.backend.tables.Payment.PAYMENT;
 

@@ -11,7 +11,7 @@ import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.repo.AbsMysqlRepository;
 import vn.aeoc.base.util.CommonUtils;
 import vn.aeoc.crm.util.BranchFilter;
-import vn.aeoc.entity.data.mysql.ServiceItem;
+import vn.aeoc.entity.data.mysql.sale.ServiceItem;
 import vn.entity.backend.tables.records.ServiceRecord;
 
 import java.util.ArrayList;

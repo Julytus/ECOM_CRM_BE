@@ -4,7 +4,7 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 import vn.aeoc.base.util.CommonUtils;
-import vn.aeoc.entity.data.mysql.User;
+import vn.aeoc.entity.data.mysql.auth.User;
 
 /**
  * Lọc dữ liệu theo chi nhánh: operator ({@code isOperator == 1}) dùng 0 để xem mọi chi nhánh;

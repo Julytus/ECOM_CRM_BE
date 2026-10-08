@@ -14,8 +14,8 @@ import vn.aeoc.crm.service.other.RagService;
 import vn.aeoc.crm.service.sale.ProductV1Service;
 import vn.aeoc.crm.util.BranchFilter;
 import vn.aeoc.crm.util.Mapper;
-import vn.aeoc.entity.data.mysql.Product;
-import vn.aeoc.entity.data.mysql.User;
+import vn.aeoc.entity.data.mysql.sale.ProductV1;
+import vn.aeoc.entity.data.mysql.auth.User;
 
 import java.security.Principal;
 
@@ -30,7 +30,7 @@ public class ProductV1Controller extends BaseController {
     private RagService ragService;
 
     @GetMapping("/productv1/list")
-    public ResponseEntity<ApiResponse<Page<Product>>> list(
+    public ResponseEntity<ApiResponse<Page<ProductV1>>> list(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer categoryId,
             @RequestParam(required = false) Integer status,
@@ -45,7 +45,7 @@ public class ProductV1Controller extends BaseController {
     }
 
     @GetMapping("/productv1/get")
-    public ResponseEntity<ApiResponse<Product>> get(
+    public ResponseEntity<ApiResponse<ProductV1>> get(
             @RequestParam Integer id,
             Principal principal
     ) {
@@ -55,19 +55,19 @@ public class ProductV1Controller extends BaseController {
     }
 
     @PostMapping("/productv1/update")
-    public ResponseEntity<ApiResponse<Product>> update(
-            @RequestBody @Valid Product product,
+    public ResponseEntity<ApiResponse<ProductV1>> update(
+            @RequestBody @Valid ProductV1 productV1,
             Principal principal
     ) {
-        String action = (CommonUtils.NVL(product.getId()) <= 0) ? "ADD" : "UPDATE";
+        String action = (CommonUtils.NVL(productV1.getId()) <= 0) ? "ADD" : "UPDATE";
         User login = checkPermission(principal, URI, action);
-        if (CommonUtils.NVL(product.getBranchId()) <= 0 && CommonUtils.NVL(login.getBranchId()) > 0) {
-            product.setBranchId(login.getBranchId());
+        if (CommonUtils.NVL(productV1.getBranchId()) <= 0 && CommonUtils.NVL(login.getBranchId()) > 0) {
+            productV1.setBranchId(login.getBranchId());
         }
 
-        Product result = (CommonUtils.NVL(product.getId()) <= 0)
-                ? productV1Service.insert(product)
-                : productV1Service.update(product.getId(), product);
+        ProductV1 result = (CommonUtils.NVL(productV1.getId()) <= 0)
+                ? productV1Service.insert(productV1)
+                : productV1Service.update(productV1.getId(), productV1);
 
         ragService.upsert(result.getId(), RagSyncConstant.PRODUCT_V1, result.getBranchId());
         return Mapper.map(result, ApiResponse::okEntity);

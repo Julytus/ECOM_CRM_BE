@@ -17,7 +17,7 @@ import vn.aeoc.crm.data.segment.SegmentTrendItem;
 import vn.aeoc.crm.service.segment.CustomerSegmentService;
 import vn.aeoc.crm.util.BranchFilter;
 import vn.aeoc.crm.util.Mapper;
-import vn.aeoc.entity.data.mysql.User;
+import vn.aeoc.entity.data.mysql.auth.User;
 
 import java.security.Principal;
 import java.util.List;

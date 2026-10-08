@@ -9,7 +9,7 @@ import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.repo.AbsMysqlRepository;
 import vn.aeoc.base.util.CommonUtils;
 import vn.aeoc.crm.util.BranchFilter;
-import vn.aeoc.entity.data.mysql.CallHistory;
+import vn.aeoc.entity.data.mysql.customer.CallHistory;
 import vn.entity.backend.tables.records.CallHistoryRecord;
 
 import java.util.List;

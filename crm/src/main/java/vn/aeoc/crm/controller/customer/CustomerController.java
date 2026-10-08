@@ -11,8 +11,8 @@ import vn.aeoc.crm.controller.BaseController;
 import vn.aeoc.crm.service.customer.CustomerService;
 import vn.aeoc.crm.util.BranchFilter;
 import vn.aeoc.crm.util.Mapper;
-import vn.aeoc.entity.data.mysql.Customer;
-import vn.aeoc.entity.data.mysql.User;
+import vn.aeoc.entity.data.mysql.customer.Customer;
+import vn.aeoc.entity.data.mysql.auth.User;
 
 import java.security.Principal;
 

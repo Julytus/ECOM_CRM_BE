@@ -1,10 +1,10 @@
-package vn.aeoc.entity.data.mysql;
+package vn.aeoc.entity.data.mysql.sale;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
-public class Product  {
+public class ProductV1 {
 
     private Integer id;
 

@@ -19,8 +19,8 @@ import vn.aeoc.crm.constant.EmailContent;
 import vn.aeoc.crm.repository.auth.RoleRepository;
 import vn.aeoc.crm.repository.auth.UserRepository;
 import vn.aeoc.crm.service.RestService;
-import vn.aeoc.entity.data.mysql.Role;
-import vn.aeoc.entity.data.mysql.User;
+import vn.aeoc.entity.data.mysql.auth.Role;
+import vn.aeoc.entity.data.mysql.auth.User;
 import vn.aeoc.entity.data.response.TokenResponse;
 
 import java.util.List;

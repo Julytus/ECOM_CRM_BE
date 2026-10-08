@@ -9,9 +9,9 @@ import vn.aeoc.crm.data.pojo.ResourceInfo;
 import vn.aeoc.crm.repository.auth.PermissionRepository;
 import vn.aeoc.crm.repository.auth.ResourceRepository;
 import vn.aeoc.crm.repository.auth.RoleRepository;
-import vn.aeoc.entity.data.mysql.Permission;
-import vn.aeoc.entity.data.mysql.Resource;
-import vn.aeoc.entity.data.mysql.Role;
+import vn.aeoc.entity.data.mysql.auth.Permission;
+import vn.aeoc.entity.data.mysql.auth.Resource;
+import vn.aeoc.entity.data.mysql.auth.Role;
 import vn.aeoc.entity.data.pojo.EBPermissionResource;
 
 import java.lang.reflect.Type;

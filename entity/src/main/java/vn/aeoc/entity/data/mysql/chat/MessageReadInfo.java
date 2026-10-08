@@ -1,4 +1,4 @@
-package vn.aeoc.entity.data.mysql;
+package vn.aeoc.entity.data.mysql.chat;
 
 import lombok.Data;
 

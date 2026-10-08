@@ -10,7 +10,7 @@ import vn.aeoc.crm.controller.BaseController;
 import vn.aeoc.crm.service.sale.CampaignSnapshotService;
 import vn.aeoc.crm.service.other.RagService;
 import vn.aeoc.crm.util.Mapper;
-import vn.aeoc.entity.data.mysql.CampaignSnapshot;
+import vn.aeoc.entity.data.mysql.customer.CampaignSnapshot;
 
 import java.security.Principal;
 

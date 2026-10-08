@@ -1,7 +1,7 @@
 package vn.aeoc.crm.data.pojo;
 
 import lombok.Data;
-import vn.aeoc.entity.data.mysql.Resource;
+import vn.aeoc.entity.data.mysql.auth.Resource;
 
 
 /**

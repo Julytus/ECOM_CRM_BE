@@ -12,8 +12,8 @@ import vn.aeoc.base.util.Tuple2;
 import vn.aeoc.crm.repository.sale.CustomerVoucherUsageRepository;
 import vn.aeoc.crm.repository.sale.InvoiceVoucherRepository;
 import vn.aeoc.crm.repository.sale.VoucherRepository;
-import vn.aeoc.entity.data.mysql.Invoice;
-import vn.aeoc.entity.data.mysql.Voucher;
+import vn.aeoc.entity.data.mysql.sale.Invoice;
+import vn.aeoc.entity.data.mysql.sale.Voucher;
 
 import java.time.LocalDateTime;
 import java.util.List;

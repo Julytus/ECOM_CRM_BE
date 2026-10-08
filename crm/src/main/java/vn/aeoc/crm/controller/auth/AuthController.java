@@ -17,8 +17,8 @@ import vn.aeoc.crm.data.response.AuthResponse;
 import vn.aeoc.crm.service.auth.RoleService;
 import vn.aeoc.crm.service.auth.UserService;
 import vn.aeoc.crm.util.Mapper;
-import vn.aeoc.entity.data.mysql.Role;
-import vn.aeoc.entity.data.mysql.User;
+import vn.aeoc.entity.data.mysql.auth.Role;
+import vn.aeoc.entity.data.mysql.auth.User;
 import vn.aeoc.entity.data.response.TokenResponse;
 
 import java.util.concurrent.CompletableFuture;

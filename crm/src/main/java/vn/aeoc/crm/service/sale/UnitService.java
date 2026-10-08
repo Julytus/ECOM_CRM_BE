@@ -6,7 +6,7 @@ import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.service.BaseService;
 import vn.aeoc.crm.repository.sale.UnitRepository;
-import vn.aeoc.entity.data.mysql.Unit;
+import vn.aeoc.entity.data.mysql.sale.Unit;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;

@@ -1,4 +1,4 @@
-package vn.aeoc.entity.data.mysql;
+package vn.aeoc.entity.data.mysql.auth;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;

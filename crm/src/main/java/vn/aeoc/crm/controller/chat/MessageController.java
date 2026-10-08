@@ -15,7 +15,7 @@ import vn.aeoc.crm.service.auth.UserService;
 import vn.aeoc.crm.service.chat.MessageService;
 import vn.aeoc.crm.util.Mapper;
 import vn.aeoc.crm.util.SecurityUtils;
-import vn.aeoc.entity.data.mysql.Message;
+import vn.aeoc.entity.data.mysql.chat.Message;
 
 import java.security.Principal;
 

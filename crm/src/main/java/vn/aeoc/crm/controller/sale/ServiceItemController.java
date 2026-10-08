@@ -13,8 +13,8 @@ import vn.aeoc.crm.service.other.RagService;
 import vn.aeoc.crm.service.sale.ServiceItemService;
 import vn.aeoc.crm.util.BranchFilter;
 import vn.aeoc.crm.util.Mapper;
-import vn.aeoc.entity.data.mysql.ServiceItem;
-import vn.aeoc.entity.data.mysql.User;
+import vn.aeoc.entity.data.mysql.sale.ServiceItem;
+import vn.aeoc.entity.data.mysql.auth.User;
 
 import java.security.Principal;
 

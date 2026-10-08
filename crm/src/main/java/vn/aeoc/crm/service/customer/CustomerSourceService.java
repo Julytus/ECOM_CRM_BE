@@ -6,7 +6,7 @@ import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.service.BaseService;
 import vn.aeoc.crm.repository.customer.CustomerSourceRepository;
-import vn.aeoc.entity.data.mysql.CustomerSource;
+import vn.aeoc.entity.data.mysql.customer.CustomerSource;
 
 @Slf4j(topic = "CUSTOMER-SOURCE-SERVICE")
 @Service

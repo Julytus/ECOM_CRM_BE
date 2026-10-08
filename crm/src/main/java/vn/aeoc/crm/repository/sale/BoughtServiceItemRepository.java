@@ -9,7 +9,7 @@ import vn.aeoc.base.repo.AbsMysqlRepository;
 import vn.aeoc.base.util.CommonUtils;
 import vn.aeoc.crm.data.pojo.Purchase;
 import vn.aeoc.crm.util.BranchFilter;
-import vn.aeoc.entity.data.mysql.BoughtService;
+import vn.aeoc.entity.data.mysql.sale.BoughtService;
 import vn.entity.backend.tables.records.BoughtServiceRecord;
 
 import java.util.*;

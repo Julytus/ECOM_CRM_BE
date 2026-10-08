@@ -5,7 +5,7 @@ import org.jooq.impl.TableImpl;
 import org.springframework.stereotype.Repository;
 import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.repo.AbsMysqlRepository;
-import vn.aeoc.entity.data.mysql.Message;
+import vn.aeoc.entity.data.mysql.chat.Message;
 import vn.entity.backend.tables.records.MessageRecord;
 
 import java.util.List;

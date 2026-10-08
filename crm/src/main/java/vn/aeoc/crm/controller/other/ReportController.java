@@ -14,7 +14,7 @@ import vn.aeoc.crm.controller.BaseController;
 import vn.aeoc.crm.data.report.*;
 import vn.aeoc.crm.service.sale.ReportService;
 import vn.aeoc.crm.util.BranchFilter;
-import vn.aeoc.entity.data.mysql.User;
+import vn.aeoc.entity.data.mysql.auth.User;
 
 import java.security.Principal;
 import java.util.List;

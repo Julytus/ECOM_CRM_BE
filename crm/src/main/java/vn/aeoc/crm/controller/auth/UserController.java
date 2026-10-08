@@ -12,7 +12,7 @@ import vn.aeoc.crm.service.auth.UserService;
 import vn.aeoc.crm.util.BranchFilter;
 import vn.aeoc.crm.util.Mapper;
 import vn.aeoc.crm.util.SecurityUtils;
-import vn.aeoc.entity.data.mysql.User;
+import vn.aeoc.entity.data.mysql.auth.User;
 
 import java.security.Principal;
 import java.util.List;

@@ -4,7 +4,7 @@ package vn.aeoc.crm.repository.chat;
 import org.jooq.impl.TableImpl;
 import org.springframework.stereotype.Repository;
 import vn.aeoc.base.repo.AbsMysqlRepository;
-import vn.aeoc.entity.data.mysql.ChatParticipant;
+import vn.aeoc.entity.data.mysql.chat.ChatParticipant;
 import vn.entity.backend.tables.records.ChatParticipantRecord;
 
 import java.time.LocalDateTime;

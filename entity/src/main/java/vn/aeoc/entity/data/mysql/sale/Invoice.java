@@ -1,4 +1,4 @@
-package vn.aeoc.entity.data.mysql;
+package vn.aeoc.entity.data.mysql.sale;
 
 import lombok.Data;
 

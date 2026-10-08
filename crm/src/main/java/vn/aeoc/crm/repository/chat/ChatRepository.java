@@ -10,7 +10,7 @@ import vn.aeoc.base.util.CommonUtils;
 import org.jooq.Record;
 import vn.aeoc.crm.data.response.ChatView;
 import vn.aeoc.crm.util.BranchFilter;
-import vn.aeoc.entity.data.mysql.Chat;
+import vn.aeoc.entity.data.mysql.chat.Chat;
 import vn.entity.backend.tables.ChatParticipant;
 import vn.entity.backend.tables.User;
 import vn.entity.backend.tables.records.ChatRecord;

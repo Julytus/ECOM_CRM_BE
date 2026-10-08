@@ -17,7 +17,7 @@ import vn.aeoc.crm.repository.chat.ChatRepository;
 import vn.aeoc.crm.repository.chat.MessageReadInfoRepository;
 import vn.aeoc.crm.repository.chat.MessageRepository;
 import vn.aeoc.crm.service.other.FileStorageService;
-import vn.aeoc.entity.data.mysql.Message;
+import vn.aeoc.entity.data.mysql.chat.Message;
 
 import java.time.LocalDateTime;
 import java.util.List;

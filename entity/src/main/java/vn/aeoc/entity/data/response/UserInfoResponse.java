@@ -1,7 +1,7 @@
 package vn.aeoc.entity.data.response;
 
 import lombok.Data;
-import vn.aeoc.entity.data.mysql.User;
+import vn.aeoc.entity.data.mysql.auth.User;
 
 /**
  * Trả về thông tin đầy đủ của một người dùng (Phục vụ cho /auth/api/me khi login.

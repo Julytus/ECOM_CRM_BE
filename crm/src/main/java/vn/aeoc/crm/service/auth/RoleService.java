@@ -8,7 +8,7 @@ import vn.aeoc.base.constant.ErrorCode;
 import vn.aeoc.base.exception.AppException;
 import vn.aeoc.base.service.BaseService;
 import vn.aeoc.crm.repository.auth.RoleRepository;
-import vn.aeoc.entity.data.mysql.Role;
+import vn.aeoc.entity.data.mysql.auth.Role;
 
 @Slf4j(topic = "ROLE-SERVICE")
 @Service

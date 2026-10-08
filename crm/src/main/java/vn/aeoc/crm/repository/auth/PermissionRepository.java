@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import vn.aeoc.base.exception.AppException;
 import vn.aeoc.base.util.CommonUtils;
-import vn.aeoc.entity.data.mysql.Permission;
+import vn.aeoc.entity.data.mysql.auth.Permission;
 import vn.aeoc.entity.data.pojo.EBPermissionResource;
 
 import java.util.ArrayList;

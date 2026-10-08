@@ -12,8 +12,8 @@ import vn.aeoc.crm.service.auth.PermissionService;
 import vn.aeoc.crm.service.auth.UserService;
 import vn.aeoc.crm.util.Mapper;
 import vn.aeoc.crm.util.SecurityUtils;
-import vn.aeoc.entity.data.mysql.Permission;
-import vn.aeoc.entity.data.mysql.User;
+import vn.aeoc.entity.data.mysql.auth.Permission;
+import vn.aeoc.entity.data.mysql.auth.User;
 import vn.aeoc.entity.data.pojo.EBPermissionResource;
 
 import java.security.Principal;

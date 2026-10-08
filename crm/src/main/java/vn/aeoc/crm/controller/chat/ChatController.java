@@ -16,8 +16,8 @@ import vn.aeoc.crm.service.chat.ChatService;
 import vn.aeoc.crm.util.BranchFilter;
 import vn.aeoc.crm.util.Mapper;
 import vn.aeoc.crm.util.SecurityUtils;
-import vn.aeoc.entity.data.mysql.Chat;
-import vn.aeoc.entity.data.mysql.ChatParticipant;
+import vn.aeoc.entity.data.mysql.chat.Chat;
+import vn.aeoc.entity.data.mysql.chat.ChatParticipant;
 
 import java.security.Principal;
 import java.util.List;

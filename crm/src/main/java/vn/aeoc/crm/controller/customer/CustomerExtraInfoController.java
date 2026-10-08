@@ -9,7 +9,7 @@ import vn.aeoc.base.config.model.ApiResponse;
 import vn.aeoc.crm.controller.BaseController;
 import vn.aeoc.crm.service.customer.CustomerExtraInfoService;
 import vn.aeoc.crm.util.Mapper;
-import vn.aeoc.entity.data.mysql.CustomerExtraInfo;
+import vn.aeoc.entity.data.mysql.customer.CustomerExtraInfo;
 
 import java.security.Principal;
 import java.util.List;

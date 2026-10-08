@@ -14,9 +14,9 @@ import vn.aeoc.crm.repository.chat.ChatParticipantRepository;
 import vn.aeoc.crm.repository.chat.ChatRepository;
 import vn.aeoc.crm.service.auth.UserService;
 import vn.aeoc.crm.service.chat.MessageService;
-import vn.aeoc.entity.data.mysql.Chat;
-import vn.aeoc.entity.data.mysql.ChatParticipant;
-import vn.aeoc.entity.data.mysql.Message;
+import vn.aeoc.entity.data.mysql.chat.Chat;
+import vn.aeoc.entity.data.mysql.chat.ChatParticipant;
+import vn.aeoc.entity.data.mysql.chat.Message;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;

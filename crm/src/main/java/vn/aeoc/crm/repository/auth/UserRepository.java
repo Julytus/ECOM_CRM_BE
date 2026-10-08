@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.repo.AbsMysqlRepository;
 import vn.aeoc.base.util.CommonUtils;
-import vn.aeoc.entity.data.mysql.User;
+import vn.aeoc.entity.data.mysql.auth.User;
 import vn.entity.backend.tables.records.UserRecord;
 
 import java.sql.Timestamp;

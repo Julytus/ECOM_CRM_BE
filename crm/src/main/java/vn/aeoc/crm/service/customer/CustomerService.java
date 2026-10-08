@@ -10,9 +10,9 @@ import vn.aeoc.crm.repository.customer.CustomerRepository;
 import vn.aeoc.crm.repository.customer.OpportunityRepository;
 import vn.aeoc.crm.service.cache.CacheKeyFactory;
 import vn.aeoc.crm.service.cache.ThreeLayerCacheTemplate;
-import vn.aeoc.entity.data.mysql.Customer;
-import vn.aeoc.entity.data.mysql.CustomerAttribute;
-import vn.aeoc.entity.data.mysql.CustomerExtraInfo;
+import vn.aeoc.entity.data.mysql.customer.Customer;
+import vn.aeoc.entity.data.mysql.customer.CustomerAttribute;
+import vn.aeoc.entity.data.mysql.customer.CustomerExtraInfo;
 
 import java.time.Duration;
 import java.util.List;

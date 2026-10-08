@@ -13,7 +13,7 @@ import vn.aeoc.crm.service.other.ScheduleService;
 import vn.aeoc.crm.util.BranchFilter;
 import vn.aeoc.crm.util.Mapper;
 import vn.aeoc.entity.data.mysql.Schedule;
-import vn.aeoc.entity.data.mysql.User;
+import vn.aeoc.entity.data.mysql.auth.User;
 
 import java.security.Principal;
 

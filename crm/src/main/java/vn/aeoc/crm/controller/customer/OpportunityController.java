@@ -19,8 +19,8 @@ import vn.aeoc.crm.service.customer.OpportunityService;
 import vn.aeoc.crm.util.BranchFilter;
 import vn.aeoc.crm.util.Mapper;
 import vn.aeoc.entity.data.mysql.Notification;
-import vn.aeoc.entity.data.mysql.Opportunity;
-import vn.aeoc.entity.data.mysql.User;
+import vn.aeoc.entity.data.mysql.customer.Opportunity;
+import vn.aeoc.entity.data.mysql.auth.User;
 
 import java.security.Principal;
 import java.util.List;

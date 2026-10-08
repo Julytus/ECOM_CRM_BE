@@ -5,7 +5,7 @@ import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.service.BaseService;
 import vn.aeoc.crm.repository.customer.CustomerAttributeRepository;
-import vn.aeoc.entity.data.mysql.CustomerAttribute;
+import vn.aeoc.entity.data.mysql.customer.CustomerAttribute;
 
 import java.util.List;
 import java.util.Map;

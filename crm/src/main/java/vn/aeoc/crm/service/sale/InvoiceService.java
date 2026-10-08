@@ -18,7 +18,7 @@ import vn.aeoc.crm.repository.sale.InvoiceRepository;
 import vn.aeoc.crm.repository.sale.InvoiceVoucherRepository;
 import vn.aeoc.crm.service.cache.CacheKeyFactory;
 import vn.aeoc.crm.service.cache.ThreeLayerCacheTemplate;
-import vn.aeoc.entity.data.mysql.Invoice;
+import vn.aeoc.entity.data.mysql.sale.Invoice;
 
 import java.time.Duration;
 import java.util.ArrayList;

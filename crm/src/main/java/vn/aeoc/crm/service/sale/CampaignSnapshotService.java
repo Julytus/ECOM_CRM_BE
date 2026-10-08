@@ -5,7 +5,7 @@ import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.service.BaseService;
 import vn.aeoc.crm.repository.sale.CampaignSnapshotRepository;
-import vn.aeoc.entity.data.mysql.CampaignSnapshot;
+import vn.aeoc.entity.data.mysql.customer.CampaignSnapshot;
 
 @Service
 public class CampaignSnapshotService extends BaseService<CampaignSnapshotRepository, CampaignSnapshot, Integer> {

@@ -6,7 +6,7 @@ import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.service.BaseService;
 import vn.aeoc.crm.constant.InvoiceConstant;
 import vn.aeoc.crm.repository.sale.BoughtProductRepository;
-import vn.aeoc.entity.data.mysql.BoughtProduct;
+import vn.aeoc.entity.data.mysql.sale.BoughtProduct;
 
 import java.util.List;
 

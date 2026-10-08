@@ -11,7 +11,7 @@ import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.repo.AbsMysqlRepository;
 import vn.aeoc.base.util.CommonUtils;
 import vn.aeoc.crm.util.BranchFilter;
-import vn.aeoc.entity.data.mysql.Product;
+import vn.aeoc.entity.data.mysql.sale.ProductV1;
 import vn.entity.backend.tables.records.ProductV1Record;
 
 import java.util.ArrayList;
@@ -23,7 +23,7 @@ import static vn.entity.backend.tables.ProductV1.PRODUCT_V1;
 import static vn.entity.backend.tables.Unit.UNIT;
 
 @Repository
-public class ProductV1Repository extends AbsMysqlRepository<ProductV1Record, Product, Integer> {
+public class ProductV1Repository extends AbsMysqlRepository<ProductV1Record, ProductV1, Integer> {
 
     @Override
     protected TableImpl<ProductV1Record> getTable() {
@@ -74,7 +74,7 @@ public class ProductV1Repository extends AbsMysqlRepository<ProductV1Record, Pro
         return condition;
     }
 
-    public List<Product> getProductByCriteria(String keyword, Integer categoryId, Integer status, Integer type, Integer branchId, Pageable pageable) {
+    public List<ProductV1> getProductByCriteria(String keyword, Integer categoryId, Integer status, Integer type, Integer branchId, Pageable pageable) {
         var c = CATEGORY_ITEM.as("c");
         var u = UNIT.as("u");
 
@@ -93,7 +93,7 @@ public class ProductV1Repository extends AbsMysqlRepository<ProductV1Record, Pro
         return select.orderBy(PRODUCT_V1.POSITION.asc(), PRODUCT_V1.ID.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getLimit())
-                .fetchInto(Product.class);
+                .fetchInto(ProductV1.class);
     }
 
     public Long countProductByCriteria(String keyword, Integer categoryId, Integer status, Integer type, Integer branchId) {
@@ -106,7 +106,7 @@ public class ProductV1Repository extends AbsMysqlRepository<ProductV1Record, Pro
     }
 
     @Override
-    public Product getById(Integer id) {
+    public ProductV1 getById(Integer id) {
         var c = CATEGORY_ITEM.as("c");
         var u = UNIT.as("u");
 
@@ -119,7 +119,7 @@ public class ProductV1Repository extends AbsMysqlRepository<ProductV1Record, Pro
                 .leftJoin(c).on(c.ID.eq(PRODUCT_V1.CATEGORY_ID))
                 .leftJoin(u).on(u.ID.eq(PRODUCT_V1.UNIT_ID))
                 .where(PRODUCT_V1.ID.eq(id))
-                .fetchOptionalInto(Product.class)
-                .orElse(new Product());
+                .fetchOptionalInto(ProductV1.class)
+                .orElse(new ProductV1());
     }
 }

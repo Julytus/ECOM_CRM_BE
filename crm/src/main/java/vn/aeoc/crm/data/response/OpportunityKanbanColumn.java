@@ -1,7 +1,7 @@
 package vn.aeoc.crm.data.response;
 
 import lombok.Data;
-import vn.aeoc.entity.data.mysql.Opportunity;
+import vn.aeoc.entity.data.mysql.customer.Opportunity;
 
 import java.util.List;
 

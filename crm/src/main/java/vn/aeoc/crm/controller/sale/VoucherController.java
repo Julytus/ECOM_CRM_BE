@@ -13,8 +13,8 @@ import vn.aeoc.crm.controller.BaseController;
 import vn.aeoc.crm.service.other.RagService;
 import vn.aeoc.crm.service.sale.VoucherService;
 import vn.aeoc.crm.util.Mapper;
-import vn.aeoc.entity.data.mysql.User;
-import vn.aeoc.entity.data.mysql.Voucher;
+import vn.aeoc.entity.data.mysql.auth.User;
+import vn.aeoc.entity.data.mysql.sale.Voucher;
 
 import java.security.Principal;
 

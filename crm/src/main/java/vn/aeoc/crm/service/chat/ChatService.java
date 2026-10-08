@@ -15,9 +15,9 @@ import vn.aeoc.crm.repository.auth.UserRepository;
 import vn.aeoc.crm.repository.chat.ChatParticipantRepository;
 import vn.aeoc.crm.repository.chat.ChatRepository;
 import vn.aeoc.crm.repository.chat.MessageReadInfoRepository;
-import vn.aeoc.entity.data.mysql.Chat;
-import vn.aeoc.entity.data.mysql.ChatParticipant;
-import vn.aeoc.entity.data.mysql.User;
+import vn.aeoc.entity.data.mysql.chat.Chat;
+import vn.aeoc.entity.data.mysql.chat.ChatParticipant;
+import vn.aeoc.entity.data.mysql.auth.User;
 
 import java.time.LocalDateTime;
 import java.util.List;

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.repo.AbsMysqlRepository;
 import vn.aeoc.base.util.CommonUtils;
-import vn.aeoc.entity.data.mysql.Role;
+import vn.aeoc.entity.data.mysql.auth.Role;
 import vn.entity.backend.tables.records.RoleRecord;
 
 import java.util.List;

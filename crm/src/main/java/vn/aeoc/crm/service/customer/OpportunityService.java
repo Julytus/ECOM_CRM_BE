@@ -16,8 +16,8 @@ import vn.aeoc.crm.repository.auth.UserRepository;
 import vn.aeoc.crm.repository.customer.OpportunityRepository;
 import vn.aeoc.crm.service.other.NotificationService;
 import vn.aeoc.entity.data.mysql.Notification;
-import vn.aeoc.entity.data.mysql.Opportunity;
-import vn.aeoc.entity.data.mysql.User;
+import vn.aeoc.entity.data.mysql.customer.Opportunity;
+import vn.aeoc.entity.data.mysql.auth.User;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -332,10 +332,10 @@ public class OpportunityService extends BaseService<
             throw new AppException("Không có nhân viên khả dụng để phân công", ErrorCode.BAD_REQUEST.getCode());
         }
 
-        List<Integer> userIds = candidates.stream().map(vn.aeoc.entity.data.mysql.User::getId).toList();
+        List<Integer> userIds = candidates.stream().map(User::getId).toList();
         Map<Integer, Integer> loadMap = repository.countActiveOpportunityByUserIds(userIds, branchId);
 
-        vn.aeoc.entity.data.mysql.User selected = candidates.stream()
+        User selected = candidates.stream()
                 .min(Comparator.comparingInt(u -> loadMap.getOrDefault(u.getId(), 0)))
                 .orElse(null);
 

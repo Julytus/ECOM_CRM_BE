@@ -6,7 +6,7 @@ import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.service.BaseService;
 import vn.aeoc.crm.repository.auth.ResourceRepository;
-import vn.aeoc.entity.data.mysql.Resource;
+import vn.aeoc.entity.data.mysql.auth.Resource;
 
 @Slf4j(topic = "RESOURCE-SERVICE")
 @Service

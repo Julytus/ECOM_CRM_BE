@@ -13,7 +13,7 @@ import vn.aeoc.base.util.CommonUtils;
 import vn.aeoc.crm.constant.InvoiceConstant;
 import vn.aeoc.crm.data.report.RevenueHourChart;
 import vn.aeoc.crm.data.report.RevenueToday;
-import vn.aeoc.entity.data.mysql.Invoice;
+import vn.aeoc.entity.data.mysql.sale.Invoice;
 import vn.entity.backend.tables.records.InvoiceRecord;
 
 import java.time.LocalDateTime;

@@ -14,8 +14,8 @@ import vn.aeoc.crm.data.response.InvoiceResponse;
 import vn.aeoc.crm.service.sale.InvoiceService;
 import vn.aeoc.crm.util.BranchFilter;
 import vn.aeoc.crm.util.Mapper;
-import vn.aeoc.entity.data.mysql.Invoice;
-import vn.aeoc.entity.data.mysql.User;
+import vn.aeoc.entity.data.mysql.sale.Invoice;
+import vn.aeoc.entity.data.mysql.auth.User;
 
 import java.security.Principal;
 import java.util.List;

@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import vn.aeoc.base.config.model.ApiResponse;
 import vn.aeoc.crm.service.sale.PaymentService;
 import vn.aeoc.crm.util.Mapper;
-import vn.aeoc.entity.data.mysql.Payment;
+import vn.aeoc.entity.data.mysql.sale.Payment;
 
 @RestController
 @RequestMapping("/payment")

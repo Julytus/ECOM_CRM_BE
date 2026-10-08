@@ -4,7 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import vn.aeoc.base.util.CommonUtils;
 import vn.aeoc.crm.config.security.SimpleSecurityUser;
 import vn.aeoc.crm.config.security.principal.impl.SimplePrincipal;
-import vn.aeoc.entity.data.mysql.User;
+import vn.aeoc.entity.data.mysql.auth.User;
 
 import java.security.Principal;
 import java.util.ArrayList;

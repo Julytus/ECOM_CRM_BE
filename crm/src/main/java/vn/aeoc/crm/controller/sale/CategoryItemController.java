@@ -11,8 +11,8 @@ import vn.aeoc.crm.controller.BaseController;
 import vn.aeoc.crm.service.sale.CategoryItemService;
 import vn.aeoc.crm.util.BranchFilter;
 import vn.aeoc.crm.util.Mapper;
-import vn.aeoc.entity.data.mysql.CategoryItem;
-import vn.aeoc.entity.data.mysql.User;
+import vn.aeoc.entity.data.mysql.sale.CategoryItem;
+import vn.aeoc.entity.data.mysql.auth.User;
 
 import java.security.Principal;
 import java.util.List;

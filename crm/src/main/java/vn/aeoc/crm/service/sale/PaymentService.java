@@ -19,8 +19,8 @@ import vn.aeoc.crm.config.payos.PayOSConfig;
 import vn.aeoc.crm.config.socket.ChatSocketHandler;
 import vn.aeoc.crm.repository.sale.InvoiceRepository;
 import vn.aeoc.crm.repository.sale.PaymentRepository;
-import vn.aeoc.entity.data.mysql.Invoice;
-import vn.aeoc.entity.data.mysql.Payment;
+import vn.aeoc.entity.data.mysql.sale.Invoice;
+import vn.aeoc.entity.data.mysql.sale.Payment;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;

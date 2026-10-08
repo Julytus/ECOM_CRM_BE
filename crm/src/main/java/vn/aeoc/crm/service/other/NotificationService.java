@@ -11,7 +11,7 @@ import vn.aeoc.crm.service.cache.CacheKeyFactory;
 import vn.aeoc.crm.service.cache.ThreeLayerCacheTemplate;
 import vn.aeoc.crm.util.BranchFilter;
 import vn.aeoc.entity.data.mysql.Notification;
-import vn.aeoc.entity.data.mysql.User;
+import vn.aeoc.entity.data.mysql.auth.User;
 
 import java.time.Duration;
 import java.util.List;

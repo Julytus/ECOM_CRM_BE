@@ -11,8 +11,8 @@ import vn.aeoc.crm.controller.BaseController;
 import vn.aeoc.crm.service.customer.CallHistoryService;
 import vn.aeoc.crm.util.BranchFilter;
 import vn.aeoc.crm.util.Mapper;
-import vn.aeoc.entity.data.mysql.CallHistory;
-import vn.aeoc.entity.data.mysql.User;
+import vn.aeoc.entity.data.mysql.customer.CallHistory;
+import vn.aeoc.entity.data.mysql.auth.User;
 
 import java.security.Principal;
 

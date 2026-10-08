@@ -6,7 +6,7 @@ import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.service.BaseService;
 import vn.aeoc.crm.repository.customer.CallHistoryRepository;
-import vn.aeoc.entity.data.mysql.CallHistory;
+import vn.aeoc.entity.data.mysql.customer.CallHistory;
 
 @Slf4j(topic = "CALL-HISTORY-SERVICE")
 @Service

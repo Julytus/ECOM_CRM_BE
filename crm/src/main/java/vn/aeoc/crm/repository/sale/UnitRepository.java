@@ -10,7 +10,7 @@ import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.repo.AbsMysqlRepository;
 import vn.aeoc.base.util.CommonUtils;
 import vn.aeoc.crm.util.BranchFilter;
-import vn.aeoc.entity.data.mysql.Unit;
+import vn.aeoc.entity.data.mysql.sale.Unit;
 import vn.entity.backend.tables.records.UnitRecord;
 
 import java.util.List;

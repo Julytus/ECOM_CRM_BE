@@ -10,7 +10,7 @@ import vn.aeoc.base.util.CommonUtils;
 import vn.aeoc.crm.controller.BaseController;
 import vn.aeoc.crm.service.auth.RoleService;
 import vn.aeoc.crm.util.Mapper;
-import vn.aeoc.entity.data.mysql.Role;
+import vn.aeoc.entity.data.mysql.auth.Role;
 
 import java.security.Principal;
 

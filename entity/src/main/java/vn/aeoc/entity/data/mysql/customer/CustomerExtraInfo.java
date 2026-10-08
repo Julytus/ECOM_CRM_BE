@@ -1,4 +1,4 @@
-package vn.aeoc.entity.data.mysql;
+package vn.aeoc.entity.data.mysql.customer;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;

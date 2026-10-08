@@ -5,9 +5,9 @@ import org.springframework.stereotype.Service;
 import vn.aeoc.base.exception.AppException;
 import vn.aeoc.base.service.BaseService;
 import vn.aeoc.crm.repository.customer.CustomerExtraInfoRepository;
-import vn.aeoc.entity.data.mysql.Customer;
-import vn.aeoc.entity.data.mysql.CustomerAttribute;
-import vn.aeoc.entity.data.mysql.CustomerExtraInfo;
+import vn.aeoc.entity.data.mysql.customer.Customer;
+import vn.aeoc.entity.data.mysql.customer.CustomerAttribute;
+import vn.aeoc.entity.data.mysql.customer.CustomerExtraInfo;
 
 import java.time.LocalDate;
 import java.util.*;
