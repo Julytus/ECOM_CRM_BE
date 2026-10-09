@@ -20,4 +20,4 @@ volumes
 
 design/*
 k8s/scripts/utils/__pycache__/
-entity/src/main/resources/config/application.properties
+#entity/src/main/resources/config/application.properties
