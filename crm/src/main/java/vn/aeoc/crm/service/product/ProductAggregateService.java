@@ -29,6 +29,18 @@ public class ProductAggregateService {
         validate(request);
         Integer productId = request.getId();
         boolean creating = productId == null || productId <= 0;
+        Double minPrice = safe(request.getVariants()).stream()
+                .map(ProductAggregateRequest.VariantInput::getPrice)
+                .min(Double::compareTo).orElse(0.0);
+        Double maxPrice = safe(request.getVariants()).stream()
+                .map(ProductAggregateRequest.VariantInput::getPrice)
+                .max(Double::compareTo).orElse(0.0);
+        Double originalMinPrice = safe(request.getVariants()).stream()
+                .map(ProductAggregateRequest.VariantInput::getOriginalPrice)
+                .min(Double::compareTo).orElse(0.0);
+        Double originalMaxPrice = safe(request.getVariants()).stream()
+                .map(ProductAggregateRequest.VariantInput::getOriginalPrice)
+                .max(Double::compareTo).orElse(0.0);
 
         if (creating) {
             productId = dsl.insertInto(PRODUCT)
@@ -52,6 +64,10 @@ public class ProductAggregateService {
                     .set(PRODUCT.DESCRIPTION, request.getDescription())
                     .set(PRODUCT.CATEGORY_ID, request.getCategoryId())
                     .set(PRODUCT.STATUS, request.getStatus())
+                    .set(PRODUCT.MIN_PRICE, minPrice)
+                    .set(PRODUCT.MAX_PRICE, maxPrice)
+                    .set(PRODUCT.ORIGINAL_MIN_PRICE, originalMinPrice)
+                    .set(PRODUCT.ORIGINAL_MAX_PRICE, originalMaxPrice)
                     .set(PRODUCT.THUMBNAIL, request.getThumbnail())
                     .set(PRODUCT.IMAGE, request.getImage())
                     .where(PRODUCT.ID.eq(productId)).execute();
@@ -111,21 +127,14 @@ public class ProductAggregateService {
 
         // Build the canonical fieldName/value -> optionId map after all option inserts/updates.
         Map<String, Integer> optionIds = dsl.select(
-                        PRODUCT_ATTRIBUTE.FIELD_NAME,
-                        ATTRIBUTE_VALUE.VALUE,
-                        ATTRIBUTE_VALUE.ID
-                )
+                        PRODUCT_ATTRIBUTE.FIELD_NAME, ATTRIBUTE_VALUE.VALUE, ATTRIBUTE_VALUE.ID)
                 .from(ATTRIBUTE_VALUE)
-                .join(PRODUCT_ATTRIBUTE)
-                .on(PRODUCT_ATTRIBUTE.ID.eq(ATTRIBUTE_VALUE.ATTRIBUTE_ID))
+                .join(PRODUCT_ATTRIBUTE).on(PRODUCT_ATTRIBUTE.ID.eq(ATTRIBUTE_VALUE.ATTRIBUTE_ID))
                 .where(PRODUCT_ATTRIBUTE.PRODUCT_ID.eq(productId))
                 .fetch()
                 .stream()
                 .collect(Collectors.toMap(
-                        r -> optionKey(
-                                r.get(PRODUCT_ATTRIBUTE.FIELD_NAME),
-                                r.get(ATTRIBUTE_VALUE.VALUE)
-                        ),
+                        r -> optionKey(r.get(PRODUCT_ATTRIBUTE.FIELD_NAME), r.get(ATTRIBUTE_VALUE.VALUE)),
                         r -> r.get(ATTRIBUTE_VALUE.ID),
                         (first, duplicate) -> first,
                         LinkedHashMap::new
