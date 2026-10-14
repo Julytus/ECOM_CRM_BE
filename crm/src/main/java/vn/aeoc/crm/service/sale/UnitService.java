@@ -1,5 +1,7 @@
 package vn.aeoc.crm.service.sale;
 
+import vn.aeoc.base.util.QueryExecutor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import vn.aeoc.base.config.extention.paging.Page;
@@ -18,8 +20,8 @@ public class UnitService extends BaseService<
         Unit,
         Integer> {
 
-    protected UnitService(UnitRepository repository) {
-        super(repository);
+    protected UnitService(UnitRepository repository, QueryExecutor queryExecutor) {
+        super(repository, queryExecutor);
     }
 
     public Page<Unit> getListUnitByCriteria(String name, Integer status, Integer branchId, Pageable pageable) {

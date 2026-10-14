@@ -1,12 +1,12 @@
 package vn.aeoc.crm.controller.product;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.config.model.ApiResponse;
 import vn.aeoc.crm.controller.BaseController;
+import vn.aeoc.crm.service.auth.UserService;
 import vn.aeoc.crm.service.product.ProductWishlistService;
 import vn.aeoc.crm.util.Mapper;
 import vn.aeoc.crm.util.SecurityUtils;
@@ -19,8 +19,12 @@ public class ProductWishlistController extends BaseController {
 
     private static final String URI = "/wishlist/";
 
-    @Autowired
-    private ProductWishlistService productWishlistService;
+    private final ProductWishlistService productWishlistService;
+
+    public ProductWishlistController(ProductWishlistService productWishlistService, UserService userService) {
+        super(userService);
+        this.productWishlistService = productWishlistService;
+    }
 
     @GetMapping("/wishlist")
     public ResponseEntity<ApiResponse<?>> getByUser(

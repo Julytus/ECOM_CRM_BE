@@ -1,6 +1,6 @@
 package vn.aeoc.base.util;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.CompletableFuture;
@@ -10,8 +10,11 @@ import java.util.function.Supplier;
 @Component
 public class QueryExecutor {
 
-    @Autowired
-    private Executor dbExecutor;
+    private final Executor dbExecutor;
+
+    public QueryExecutor(@Qualifier("dbExecutor") Executor dbExecutor) {
+        this.dbExecutor = dbExecutor;
+    }
 
     public <T> CompletableFuture<T> async(Supplier<T> supplier) {
         return CompletableFuture.supplyAsync(supplier, dbExecutor);

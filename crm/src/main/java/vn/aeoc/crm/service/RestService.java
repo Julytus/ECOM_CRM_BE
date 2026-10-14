@@ -1,5 +1,6 @@
 package vn.aeoc.crm.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -18,6 +19,7 @@ import java.time.format.DateTimeParseException;
 import java.util.Iterator;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class RestService {
     private RestTemplate restTemplate;
@@ -52,14 +54,14 @@ public class RestService {
     public String callApiFromPartner(String url, String method,
                                      String authentication, String defaultJwt,
                                      String httpHeaders, JSONObject jsonObject) {
-        System.out.println("from callApiFromPartner");
+        log.debug("from callApiFromPartner");
         String requestJson = "";
         JSONObject standardizedJson = standardizeDateTimes(jsonObject);
         if (jsonObject != null) {
             requestJson = standardizedJson.toString();
-            System.out.println(requestJson);
+            log.debug("{}", requestJson);
         }
-        System.out.println(jsonObject);
+        log.debug("{}", jsonObject);
 
         //Hỗ trợ url tương đối => Lúc đó lấy theo mặc định
         String fullUrl = getFullUrl(url);
@@ -104,11 +106,11 @@ public class RestService {
 
         switch (method.toUpperCase()) {
             case "POST":
-                System.out.println("Request URL: " + fullUrl);
-                System.out.println("Request Headers: " + headers);
+                log.debug("Request URL: {}", fullUrl);
+                log.debug("Request Headers: {}", headers);
 
                 curlCommand = generateCurl(fullUrl, method.toUpperCase(), entity);
-                System.out.println("CURL Command:\n" + curlCommand);
+                log.debug("CURL Command:\n{}", curlCommand);
 
                 response = restTemplate.exchange(fullUrl, HttpMethod.POST, entity, String.class);
                 break;
@@ -129,9 +131,9 @@ public class RestService {
 
                 // Xây dựng URL hoàn chỉnh với query string
                 String finalUrl = builder.toUriString();
-                System.out.println("Final GET URL: " + finalUrl);
+                log.debug("Final GET URL: {}", finalUrl);
                 curlCommand = generateCurl(finalUrl, method.toUpperCase(), entity);
-                System.out.println("CURL Command:\n" + curlCommand);
+                log.debug("CURL Command:\n{}", curlCommand);
                 // Gửi request GET với URL đã bao gồm query string
                 response = restTemplate.exchange(finalUrl, HttpMethod.GET, new HttpEntity<>(headers), String.class);
                 break;
@@ -152,8 +154,8 @@ public class RestService {
                 throw new UnsupportedOperationException("Unsupported method: " + method);
         }
 
-        System.out.println(method.toUpperCase() + " Response: " + response.getBody() + " " + response.toString());
-        System.out.printf("url =>" + fullUrl);
+        log.debug("{} Response: {} {}", method.toUpperCase(), response.getBody(), response);
+        log.debug("url => {}", fullUrl);
         return response.getBody();
     }
 

@@ -1,6 +1,5 @@
 package vn.aeoc.base.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.repo.AbsMysqlRepository;
@@ -17,11 +16,11 @@ public abstract class BaseService<
 
     protected final R repository;
 
-    @Autowired
-    protected QueryExecutor queryExecutor;
+    protected final QueryExecutor queryExecutor;
 
-    protected BaseService(R repository) {
+    protected BaseService(R repository, QueryExecutor queryExecutor) {
         this.repository = repository;
+        this.queryExecutor = queryExecutor;
     }
 
     /* ==============================

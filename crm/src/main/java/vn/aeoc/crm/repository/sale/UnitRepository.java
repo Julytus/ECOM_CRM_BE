@@ -1,5 +1,6 @@
 package vn.aeoc.crm.repository.sale;
 
+import org.jooq.DSLContext;
 import org.apache.commons.lang3.StringUtils;
 import org.jooq.Condition;
 import org.jooq.SelectConditionStep;
@@ -19,6 +20,10 @@ import static vn.entity.backend.tables.Unit.UNIT;
 
 @Repository
 public class UnitRepository extends AbsMysqlRepository<UnitRecord, Unit, Integer> {
+    public UnitRepository(DSLContext dslContext) {
+        super(dslContext);
+    }
+
 
     @Override
     protected TableImpl<UnitRecord> getTable() {

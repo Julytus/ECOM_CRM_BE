@@ -1,5 +1,6 @@
 package vn.aeoc.crm.repository.chat;
 
+import org.jooq.DSLContext;
 import org.jooq.Condition;
 import org.jooq.impl.TableImpl;
 import org.springframework.stereotype.Repository;
@@ -15,10 +16,8 @@ import static vn.entity.backend.tables.Message.MESSAGE;
 @Repository
 public class MessageRepository
         extends AbsMysqlRepository<MessageRecord, Message, Integer> {
-
-    public MessageRepository() {
-        this.pojoClass = Message.class;
-        this.fieldID   = MESSAGE.ID;
+    public MessageRepository(DSLContext dslContext) {
+        super(dslContext);
     }
 
     @Override

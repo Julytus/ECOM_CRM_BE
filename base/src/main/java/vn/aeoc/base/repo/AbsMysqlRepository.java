@@ -8,7 +8,6 @@ import org.jooq.Record;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
 import org.jooq.impl.TableRecordImpl;
-import org.springframework.beans.factory.annotation.Autowired;
 import vn.aeoc.base.config.extention.paging.Pageable;
 
 import java.lang.reflect.ParameterizedType;
@@ -20,8 +19,11 @@ import static vn.aeoc.base.util.MysqlUtil.toUpdateQueries;
 
 public abstract class AbsMysqlRepository<R extends TableRecordImpl<R>, P, ID> {
 
-    @Autowired
-    protected DSLContext dslContext;
+    protected final DSLContext dslContext;
+
+    protected AbsMysqlRepository(DSLContext dslContext) {
+        this.dslContext = dslContext;
+    }
 
     @SneakyThrows
     @PostConstruct

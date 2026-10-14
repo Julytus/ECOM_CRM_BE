@@ -1,6 +1,5 @@
 package vn.aeoc.crm.controller.other;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.aeoc.base.config.extention.paging.Page;
@@ -8,6 +7,7 @@ import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.config.model.ApiResponse;
 import vn.aeoc.base.util.CommonUtils;
 import vn.aeoc.crm.controller.BaseController;
+import vn.aeoc.crm.service.auth.UserService;
 import vn.aeoc.crm.service.other.BranchService;
 import vn.aeoc.crm.util.Mapper;
 import vn.aeoc.entity.data.mysql.Branch;
@@ -19,8 +19,12 @@ public class BranchController extends BaseController {
 
     private static final String URI = "/branch/";
 
-    @Autowired
-    private BranchService service;
+    private final BranchService service;
+
+    public BranchController(BranchService service, UserService userService) {
+        super(userService);
+        this.service = service;
+    }
 
     /**
      * Danh sách chi nhánh

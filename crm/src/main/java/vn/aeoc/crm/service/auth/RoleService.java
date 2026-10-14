@@ -1,5 +1,7 @@
 package vn.aeoc.crm.service.auth;
 
+import vn.aeoc.base.util.QueryExecutor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import vn.aeoc.base.config.extention.paging.Page;
@@ -17,8 +19,8 @@ public class RoleService extends BaseService<
         Role,
         Integer> {
 
-    protected RoleService(RoleRepository repository) {
-        super(repository);
+    protected RoleService(RoleRepository repository, QueryExecutor queryExecutor) {
+        super(repository, queryExecutor);
     }
 
     public Page<Role> getListRoleByCriteria(Integer id, String name, Integer isDefault,

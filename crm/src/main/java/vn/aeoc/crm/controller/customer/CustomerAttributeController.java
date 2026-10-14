@@ -1,6 +1,5 @@
 package vn.aeoc.crm.controller.customer;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.aeoc.base.config.extention.paging.Page;
@@ -8,6 +7,7 @@ import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.config.model.ApiResponse;
 import vn.aeoc.base.util.CommonUtils;
 import vn.aeoc.crm.controller.BaseController;
+import vn.aeoc.crm.service.auth.UserService;
 import vn.aeoc.crm.service.customer.CustomerAttributeService;
 import vn.aeoc.crm.util.BranchFilter;
 import vn.aeoc.crm.util.Mapper;
@@ -21,8 +21,12 @@ public class CustomerAttributeController extends BaseController {
 
     private static final String URI = "/customerAttribute/";
 
-    @Autowired
-    private CustomerAttributeService service;
+    private final CustomerAttributeService service;
+
+    public CustomerAttributeController(CustomerAttributeService service, UserService userService) {
+        super(userService);
+        this.service = service;
+    }
 
     /**
      * Danh sách Customer Attribute (tìm kiếm & phân trang)

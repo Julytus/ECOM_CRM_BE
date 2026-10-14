@@ -212,7 +212,7 @@ public class UserService {
                     null            // jsonObject (GET không cần body)
             );
 
-            System.out.println("Google UserInfo Response: " + response);
+            log.debug("Google UserInfo Response: {}", response);
 
             // Parse JSON response thành User object
             User user = new Gson().fromJson(response, User.class);
@@ -220,8 +220,7 @@ public class UserService {
             return user;
 
         } catch (Exception e) {
-            System.err.println("Lỗi khi gọi Google UserInfo API: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Lỗi khi gọi Google UserInfo API: {}", e.getMessage(), e);
             throw new RuntimeException("Không thể xác thực với Google", e);
         }
     }

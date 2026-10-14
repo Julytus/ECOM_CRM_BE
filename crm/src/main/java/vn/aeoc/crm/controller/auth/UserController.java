@@ -1,6 +1,5 @@
 package vn.aeoc.crm.controller.auth;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.aeoc.base.config.extention.paging.Cursor;
@@ -21,8 +20,9 @@ import java.util.List;
 public class UserController extends BaseController {
     private static String URI = "/user/";
 
-    @Autowired
-    private UserService userService;
+    public UserController(UserService userService) {
+        super(userService);
+    }
 
     /**
      * Danh sách user (có tìm kiếm, phân trang)

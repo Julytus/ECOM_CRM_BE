@@ -48,7 +48,7 @@ public class InvoiceService extends BaseService<InvoiceRepository, Invoice, Inte
                              BoughtProductService boughtProductService,
                              BoughtServiceItemService boughtServiceItemService,
                              ThreeLayerCacheTemplate cacheTemplate) {
-        super(repository);
+        super(repository, queryExecutor);
         this.invoiceVoucherRepository = invoiceVoucherRepository;
         this.customerVoucherUsageRepository = customerVoucherUsageRepository;
         this.queryExecutor = queryExecutor;

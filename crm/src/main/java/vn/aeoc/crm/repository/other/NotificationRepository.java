@@ -1,5 +1,6 @@
 package vn.aeoc.crm.repository.other;
 
+import org.jooq.DSLContext;
 import org.jooq.Condition;
 import org.jooq.impl.TableImpl;
 import org.springframework.stereotype.Repository;
@@ -18,6 +19,10 @@ public class NotificationRepository extends AbsMysqlRepository<
         NotificationRecord,
         Notification,
         Integer> {
+    public NotificationRepository(DSLContext dslContext) {
+        super(dslContext);
+    }
+
     @Override
     protected TableImpl<NotificationRecord> getTable() {
         return NOTIFICATION;

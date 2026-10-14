@@ -23,6 +23,10 @@ public class CustomerAttributeRepository extends AbsMysqlRepository<
         CustomerAttributeRecord,
         CustomerAttribute,
         Integer> {
+    public CustomerAttributeRepository(DSLContext dslContext) {
+        super(dslContext);
+    }
+
     @Override
     protected TableImpl<CustomerAttributeRecord> getTable() {
         return CUSTOMER_ATTRIBUTE;

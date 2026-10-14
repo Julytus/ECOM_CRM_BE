@@ -24,6 +24,10 @@ import static vn.entity.backend.tables.ProductVariant.PRODUCT_VARIANT;
 
 @Repository
 public class ProductRepository extends AbsMysqlRepository<ProductRecord, Product, Integer> {
+    public ProductRepository(DSLContext dslContext) {
+        super(dslContext);
+    }
+
     @Override
     protected TableImpl<ProductRecord> getTable() {
         return PRODUCT;

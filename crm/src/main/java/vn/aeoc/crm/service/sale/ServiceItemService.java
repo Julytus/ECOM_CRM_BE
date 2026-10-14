@@ -1,5 +1,7 @@
 package vn.aeoc.crm.service.sale;
 
+import vn.aeoc.base.util.QueryExecutor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import vn.aeoc.base.config.extention.paging.Page;
@@ -15,8 +17,8 @@ public class ServiceItemService extends BaseService<
         ServiceItem,
         Integer> {
 
-    public ServiceItemService(ServiceItemRepository repository) {
-        super(repository);
+    public ServiceItemService(ServiceItemRepository repository, QueryExecutor queryExecutor) {
+        super(repository, queryExecutor);
     }
 
     public Page<ServiceItem> getByCriteria(

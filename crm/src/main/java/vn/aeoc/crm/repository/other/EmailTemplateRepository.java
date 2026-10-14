@@ -1,5 +1,6 @@
 package vn.aeoc.crm.repository.other;
 
+import org.jooq.DSLContext;
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
@@ -17,6 +18,10 @@ import static vn.entity.backend.tables.EmailTemplates.EMAIL_TEMPLATES;
 @Repository
 public class EmailTemplateRepository
         extends AbsMysqlRepository<EmailTemplatesRecord, EmailTemplate, Integer> {
+    public EmailTemplateRepository(DSLContext dslContext) {
+        super(dslContext);
+    }
+
 
     @Override
     protected TableImpl<EmailTemplatesRecord> getTable() {

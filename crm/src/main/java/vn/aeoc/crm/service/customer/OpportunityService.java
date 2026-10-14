@@ -1,5 +1,7 @@
 package vn.aeoc.crm.service.customer;
 
+import vn.aeoc.base.util.QueryExecutor;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import vn.aeoc.base.config.extention.paging.Page;
@@ -35,8 +37,8 @@ public class OpportunityService extends BaseService<
             OpportunityRepository repository,
             UserRepository userRepository,
             NotificationService notificationService
-    ) {
-        super(repository);
+    , QueryExecutor queryExecutor) {
+        super(repository, queryExecutor);
         this.userRepository = userRepository;
         this.notificationService = notificationService;
     }

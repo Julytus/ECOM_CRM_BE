@@ -1,5 +1,7 @@
 package vn.aeoc.crm.service.customer;
 
+import vn.aeoc.base.util.QueryExecutor;
+
 import org.springframework.stereotype.Service;
 import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
@@ -16,8 +18,8 @@ public class CustomerAttributeService extends BaseService<
         CustomerAttribute,
         Integer> {
 
-    public CustomerAttributeService(CustomerAttributeRepository repository) {
-        super(repository);
+    public CustomerAttributeService(CustomerAttributeRepository repository, QueryExecutor queryExecutor) {
+        super(repository, queryExecutor);
     }
 
     public Page<CustomerAttribute> getByCriteria(

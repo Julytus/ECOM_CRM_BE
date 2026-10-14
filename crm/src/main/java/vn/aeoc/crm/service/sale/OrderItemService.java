@@ -1,5 +1,7 @@
 package vn.aeoc.crm.service.sale;
 
+import vn.aeoc.base.util.QueryExecutor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,8 +26,8 @@ public class OrderItemService
 
     private final ProductVariantRepository productVariantRepository;
 
-    public OrderItemService(OrderItemRepository repository, ProductVariantRepository productVariantRepository) {
-        super(repository);
+    public OrderItemService(OrderItemRepository repository, ProductVariantRepository productVariantRepository, QueryExecutor queryExecutor) {
+        super(repository, queryExecutor);
         this.productVariantRepository = productVariantRepository;
     }
 

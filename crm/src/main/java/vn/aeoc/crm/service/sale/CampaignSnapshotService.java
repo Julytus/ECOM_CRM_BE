@@ -1,5 +1,7 @@
 package vn.aeoc.crm.service.sale;
 
+import vn.aeoc.base.util.QueryExecutor;
+
 import org.springframework.stereotype.Service;
 import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
@@ -9,8 +11,8 @@ import vn.aeoc.entity.data.mysql.customer.CampaignSnapshot;
 
 @Service
 public class CampaignSnapshotService extends BaseService<CampaignSnapshotRepository, CampaignSnapshot, Integer> {
-    protected CampaignSnapshotService(CampaignSnapshotRepository repository) {
-        super(repository);
+    protected CampaignSnapshotService(CampaignSnapshotRepository repository, QueryExecutor queryExecutor) {
+        super(repository, queryExecutor);
     }
 
     public Page<CampaignSnapshot> getByCriteria(Integer customerId, Pageable pageable) {

@@ -1,6 +1,5 @@
 package vn.aeoc.crm.controller.sale;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.aeoc.base.config.extention.paging.Page;
@@ -11,6 +10,7 @@ import vn.aeoc.crm.controller.BaseController;
 import vn.aeoc.crm.data.report.RevenueHourChart;
 import vn.aeoc.crm.data.report.RevenueToday;
 import vn.aeoc.crm.data.response.InvoiceResponse;
+import vn.aeoc.crm.service.auth.UserService;
 import vn.aeoc.crm.service.sale.InvoiceService;
 import vn.aeoc.crm.util.BranchFilter;
 import vn.aeoc.crm.util.Mapper;
@@ -25,8 +25,12 @@ public class InvoiceController extends BaseController {
 
     private static final String URI = "/invoice/";
 
-    @Autowired
-    private InvoiceService service;
+    private final InvoiceService service;
+
+    public InvoiceController(InvoiceService service, UserService userService) {
+        super(userService);
+        this.service = service;
+    }
 
     @GetMapping("/invoice/list")
     public ResponseEntity<ApiResponse<Page<Invoice>>> list(

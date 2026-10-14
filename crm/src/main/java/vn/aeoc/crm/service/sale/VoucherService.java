@@ -29,7 +29,7 @@ public class VoucherService extends BaseService<VoucherRepository, Voucher, Inte
     protected VoucherService(VoucherRepository repository, QueryExecutor queryExecutor,
                              InvoiceService invoiceService, InvoiceVoucherRepository invoiceVoucherRepository,
                              CustomerVoucherUsageRepository customerVoucherUsageRepository) {
-        super(repository);
+        super(repository, queryExecutor);
         this.queryExecutor = queryExecutor;
         this.invoiceService = invoiceService;
         this.invoiceVoucherRepository = invoiceVoucherRepository;

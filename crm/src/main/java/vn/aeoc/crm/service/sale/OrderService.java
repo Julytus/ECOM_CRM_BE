@@ -1,5 +1,7 @@
 package vn.aeoc.crm.service.sale;
 
+import vn.aeoc.base.util.QueryExecutor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,8 +32,8 @@ public class OrderService extends BaseService<OrderRepository, Order, Integer> {
     private final OrderItemRepository orderItemRepository;
     private final OrderItemService orderItemService;
 
-    public OrderService(OrderRepository repository, OrderItemRepository orderItemRepository, OrderItemService orderItemService) {
-        super(repository);
+    public OrderService(OrderRepository repository, OrderItemRepository orderItemRepository, OrderItemService orderItemService, QueryExecutor queryExecutor) {
+        super(repository, queryExecutor);
         this.orderItemRepository = orderItemRepository;
         this.orderItemService = orderItemService;
     }
@@ -153,7 +155,7 @@ public class OrderService extends BaseService<OrderRepository, Order, Integer> {
                     query.append('=');
                     query.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
                 } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
+                    log.error("Failed to URL-encode VNPay hash field: {}", fieldName, e);
                 }
                 if (itr.hasNext()) {
                     query.append('&');

@@ -1,6 +1,5 @@
 package vn.aeoc.crm.controller.auth;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.aeoc.base.config.extention.paging.Page;
@@ -9,6 +8,7 @@ import vn.aeoc.base.config.model.ApiResponse;
 import vn.aeoc.base.util.CommonUtils;
 import vn.aeoc.crm.controller.BaseController;
 import vn.aeoc.crm.service.auth.ResourceService;
+import vn.aeoc.crm.service.auth.UserService;
 import vn.aeoc.crm.util.Mapper;
 import vn.aeoc.entity.data.mysql.auth.Resource;
 
@@ -18,8 +18,12 @@ import java.security.Principal;
 public class ResourceController extends BaseController {
     private static final String URI = "/resource/";
 
-    @Autowired
-    private ResourceService resourceService;
+    private final ResourceService resourceService;
+
+    public ResourceController(ResourceService resourceService, UserService userService) {
+        super(userService);
+        this.resourceService = resourceService;
+    }
 
     /**
      * Danh sách Resource (tìm kiếm & phân trang)

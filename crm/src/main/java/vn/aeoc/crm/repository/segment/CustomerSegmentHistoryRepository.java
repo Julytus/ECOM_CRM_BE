@@ -1,5 +1,6 @@
 package vn.aeoc.crm.repository.segment;
 
+import org.jooq.DSLContext;
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
@@ -19,6 +20,10 @@ public class CustomerSegmentHistoryRepository extends AbsMysqlRepository<
         CustomerSegmentHistoryRecord,
         CustomerSegmentHistoryRow,
         Integer> {
+    public CustomerSegmentHistoryRepository(DSLContext dslContext) {
+        super(dslContext);
+    }
+
 
     @Override
     protected TableImpl<CustomerSegmentHistoryRecord> getTable() {

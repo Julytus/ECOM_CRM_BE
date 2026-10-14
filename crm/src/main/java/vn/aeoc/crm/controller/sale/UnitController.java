@@ -1,6 +1,5 @@
 package vn.aeoc.crm.controller.sale;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.aeoc.base.config.extention.paging.Page;
@@ -8,6 +7,7 @@ import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.config.model.ApiResponse;
 import vn.aeoc.base.util.CommonUtils;
 import vn.aeoc.crm.controller.BaseController;
+import vn.aeoc.crm.service.auth.UserService;
 import vn.aeoc.crm.service.sale.UnitService;
 import vn.aeoc.crm.util.BranchFilter;
 import vn.aeoc.crm.util.Mapper;
@@ -21,8 +21,12 @@ public class UnitController extends BaseController {
 
     private static final String URI = "/product/";
 
-    @Autowired
-    private UnitService service;
+    private final UnitService service;
+
+    public UnitController(UnitService service, UserService userService) {
+        super(userService);
+        this.service = service;
+    }
 
     @GetMapping("/unit/list")
     public ResponseEntity<ApiResponse<Page<Unit>>> listUnits(

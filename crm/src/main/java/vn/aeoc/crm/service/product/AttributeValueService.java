@@ -1,5 +1,7 @@
 package vn.aeoc.crm.service.product;
 
+import vn.aeoc.base.util.QueryExecutor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import vn.aeoc.base.config.extention.paging.Page;
@@ -15,8 +17,8 @@ public class AttributeValueService extends BaseService<
         AttributeValue,
         Integer> {
 
-    public AttributeValueService(AttributeValueRepository repository) {
-        super(repository);
+    public AttributeValueService(AttributeValueRepository repository, QueryExecutor queryExecutor) {
+        super(repository, queryExecutor);
     }
 
     public Page<AttributeValue> getByCriteria(

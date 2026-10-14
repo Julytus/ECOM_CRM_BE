@@ -1,5 +1,6 @@
 package vn.aeoc.crm.repository.sale;
 
+import org.jooq.DSLContext;
 import org.apache.commons.lang3.StringUtils;
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
@@ -20,6 +21,10 @@ import static vn.entity.backend.tables.Order.ORDER;
 @Repository
 public class OrderRepository
         extends AbsMysqlRepository<OrderRecord, Order, Integer> {
+    public OrderRepository(DSLContext dslContext) {
+        super(dslContext);
+    }
+
 
     @Override
     protected TableImpl<OrderRecord> getTable() {

@@ -1,5 +1,7 @@
 package vn.aeoc.crm.service.product;
 
+import vn.aeoc.base.util.QueryExecutor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import vn.aeoc.base.config.extention.paging.Page;
@@ -19,8 +21,8 @@ public class ProductWishlistService extends BaseService<
         ProductWishlist,
         Integer> {
 
-    public ProductWishlistService(ProductWishlistRepository repository) {
-        super(repository);
+    public ProductWishlistService(ProductWishlistRepository repository, QueryExecutor queryExecutor) {
+        super(repository, queryExecutor);
     }
 
     public List<ProductWishlist> getByCriteria(

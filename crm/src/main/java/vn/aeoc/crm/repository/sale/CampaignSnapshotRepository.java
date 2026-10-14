@@ -1,5 +1,6 @@
 package vn.aeoc.crm.repository.sale;
 
+import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.impl.TableImpl;
 import org.springframework.stereotype.Repository;
@@ -15,6 +16,10 @@ import static vn.entity.backend.tables.CampaignSnapshot.CAMPAIGN_SNAPSHOT;
 
 @Repository
 public class CampaignSnapshotRepository extends AbsMysqlRepository<CampaignSnapshotRecord, CampaignSnapshot, Integer> {
+    public CampaignSnapshotRepository(DSLContext dslContext) {
+        super(dslContext);
+    }
+
     @Override
     protected TableImpl<CampaignSnapshotRecord> getTable() {
         return CAMPAIGN_SNAPSHOT;

@@ -1,5 +1,6 @@
 package vn.aeoc.crm.repository.sale;
 
+import org.jooq.DSLContext;
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
@@ -22,6 +23,10 @@ import static vn.entity.backend.tables.Service.SERVICE;
 
 @Repository
 public class BoughtServiceItemRepository extends AbsMysqlRepository<BoughtServiceRecord, BoughtService, Integer> {
+    public BoughtServiceItemRepository(DSLContext dslContext) {
+        super(dslContext);
+    }
+
 
     @Override
     protected TableImpl<BoughtServiceRecord> getTable() {

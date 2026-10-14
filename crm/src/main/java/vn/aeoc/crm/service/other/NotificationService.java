@@ -1,5 +1,7 @@
 package vn.aeoc.crm.service.other;
 
+import vn.aeoc.base.util.QueryExecutor;
+
 import org.springframework.stereotype.Service;
 import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
@@ -33,8 +35,8 @@ public class NotificationService extends BaseService<
             ThreeLayerCacheTemplate cacheTemplate,
             ChatSocketHandler socketHandler,
             UserService userService
-    ) {
-        super(repository);
+    , QueryExecutor queryExecutor) {
+        super(repository, queryExecutor);
         this.cacheTemplate = cacheTemplate;
         this.socketHandler = socketHandler;
         this.userService = userService;

@@ -1,5 +1,6 @@
 package vn.aeoc.crm.repository.segment;
 
+import org.jooq.DSLContext;
 import org.jooq.Condition;
 import org.jooq.Query;
 import org.jooq.SelectHavingStep;
@@ -28,6 +29,10 @@ public class CustomerSegmentRepository extends AbsMysqlRepository<
         CustomerSegmentSnapshotRecord,
         CustomerSegmentSnapshotRow,
         Integer> {
+    public CustomerSegmentRepository(DSLContext dslContext) {
+        super(dslContext);
+    }
+
 
     @Override
     protected TableImpl<CustomerSegmentSnapshotRecord> getTable() {

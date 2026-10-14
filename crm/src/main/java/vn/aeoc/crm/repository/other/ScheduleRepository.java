@@ -4,7 +4,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.util.CommonUtils;
@@ -23,8 +22,11 @@ import static vn.entity.backend.tables.User.USER;
 @Repository
 public class ScheduleRepository {
 
-    @Autowired
-    private DSLContext dslContext;
+    private final DSLContext dslContext;
+
+    public ScheduleRepository(DSLContext dslContext) {
+        this.dslContext = dslContext;
+    }
 
     // ==========================
     //   FIELDS

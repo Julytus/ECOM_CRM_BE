@@ -1,7 +1,6 @@
 package vn.aeoc.crm.repository.sale;
 
 import org.jooq.DSLContext;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import vn.aeoc.entity.data.mysql.sale.Payment;
 
@@ -10,8 +9,11 @@ import static vn.entity.backend.tables.Payment.PAYMENT;
 @Repository
 public class PaymentRepository {
 
-    @Autowired
-    private DSLContext dsl;
+    private final DSLContext dsl;
+
+    public PaymentRepository(DSLContext dsl) {
+        this.dsl = dsl;
+    }
 
     public Payment findByInvoiceId(Integer invoiceId) {
         return dsl.selectFrom(PAYMENT)

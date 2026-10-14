@@ -1,6 +1,5 @@
 package vn.aeoc.crm.controller.chat;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,11 +22,12 @@ import java.security.Principal;
 @RequestMapping("/message")
 public class MessageController extends BaseController {
 
-    @Autowired
-    private MessageService service;
+    private final MessageService service;
 
-    @Autowired
-    private UserService userService;
+    public MessageController(MessageService service, UserService userService) {
+        super(userService);
+        this.service = service;
+    }
 
     @GetMapping("/list-cursor")
     public ResponseEntity<ApiResponse<Cursor<Message>>> listCursor(

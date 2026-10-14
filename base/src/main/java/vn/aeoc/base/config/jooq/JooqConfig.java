@@ -1,9 +1,9 @@
 package vn.aeoc.base.config.jooq;
 
+import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
 import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -11,10 +11,10 @@ import javax.sql.DataSource;
 import java.util.logging.LogManager;
 
 @Configuration
+@RequiredArgsConstructor
 public class JooqConfig {
 
-    @Autowired
-    private DataSource dataSource;
+    private final DataSource dataSource;
 
     @Bean
     public DSLContext dslContext() {

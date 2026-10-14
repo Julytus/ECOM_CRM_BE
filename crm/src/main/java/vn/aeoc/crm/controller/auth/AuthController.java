@@ -2,7 +2,6 @@ package vn.aeoc.crm.controller.auth;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mindrot.jbcrypt.BCrypt;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,14 +24,14 @@ import java.util.concurrent.CompletableFuture;
 
 @RestController
 public class AuthController extends BaseController {
-    @Autowired
-    private UserService userService;
+    private final SystemProperties systemProperties;
+    private final RoleService roleService;
 
-    @Autowired
-    private SystemProperties systemProperties;
-
-    @Autowired
-    private RoleService roleService;
+    public AuthController(SystemProperties systemProperties, RoleService roleService, UserService userService) {
+        super(userService);
+        this.systemProperties = systemProperties;
+        this.roleService = roleService;
+    }
 
     @PostMapping("/user/authenticate")
     public ResponseEntity<ApiResponse<TokenResponse>> login(

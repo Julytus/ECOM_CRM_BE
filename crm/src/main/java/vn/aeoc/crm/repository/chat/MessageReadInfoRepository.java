@@ -1,5 +1,6 @@
 package vn.aeoc.crm.repository.chat;
 
+import org.jooq.DSLContext;
 import org.jooq.impl.TableImpl;
 import org.springframework.stereotype.Repository;
 import vn.aeoc.base.repo.AbsMysqlRepository;
@@ -14,10 +15,8 @@ import static vn.entity.backend.tables.MessageReadInfo.MESSAGE_READ_INFO;
 @Repository
 public class MessageReadInfoRepository
         extends AbsMysqlRepository<MessageReadInfoRecord, MessageReadInfo, Integer> {
-
-    public MessageReadInfoRepository() {
-        this.pojoClass = MessageReadInfo.class;
-        this.fieldID   = MESSAGE_READ_INFO.ID;
+    public MessageReadInfoRepository(DSLContext dslContext) {
+        super(dslContext);
     }
 
     @Override

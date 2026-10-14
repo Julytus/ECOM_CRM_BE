@@ -27,10 +27,10 @@ spring:
       max-file-size: 50MB
       max-request-size: 50MB
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: iamapooritstuden@gmail.com
-    password: "ageo kjas ukea jbse"
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
         mail:
             smtp:
@@ -49,7 +49,7 @@ security:
   enabled: true
   jwt:
     enabled: true
-    secret-key: Tuandeptraibodoithe@/~matkhaubimatsieumanh
+    secret-key: ${JWT_SECRET_KEY}
     header: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
     expired-in: 15552000000
   api-key:
@@ -66,10 +66,10 @@ socketio:
   port: ${SOCKET_IO_PORT:9090}
 
 payos:
-  client-id: ed17ddc1-63a3-4644-9ef4-5298e51f3d53
-  api-key: 16240bbc-b550-44c0-8aa4-f9aeff7ca93a
-  checksum-key: dc3bb2f3b3561e30b99eaacbd5781e579f48d79f8a84cde165e48ebb5de026c6
-  api-url: https://api-merchant.payos.vn/v2/payment-requests
+  client-id: ${PAYOS_CLIENT_ID}
+  api-key: ${PAYOS_API_KEY}
+  checksum-key: ${PAYOS_CHECKSUM_KEY}
+  api-url: ${PAYOS_API_URL:https://api-merchant.payos.vn/v2/payment-requests}
 
 rag:
   webhook:
@@ -115,7 +115,7 @@ system:
 
 ollama:
   url: https://ollama.com/api/chat
-  api-key: ${OLLAMA_API_KEY:fbf463b430e74d38b993ff5398f7aa75.GavKE7IDbWpe36jpGXlXo8X_}
+  api-key: ${OLLAMA_API_KEY}
   model: ${OLLAMA_MODEL:gemma4:31b}
   temperature: 0.3
 

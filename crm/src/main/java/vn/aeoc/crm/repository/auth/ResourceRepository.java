@@ -1,5 +1,6 @@
 package vn.aeoc.crm.repository.auth;
 
+import org.jooq.DSLContext;
 import org.apache.commons.lang3.StringUtils;
 import org.jooq.Condition;
 import org.jooq.Record;
@@ -21,6 +22,10 @@ import static vn.entity.backend.tables.Resource.RESOURCE;
 
 @Repository
 public class ResourceRepository extends AbsMysqlRepository<ResourceRecord, Resource, Integer> {
+    public ResourceRepository(DSLContext dslContext) {
+        super(dslContext);
+    }
+
 
     @Override
     protected TableImpl<ResourceRecord> getTable() {

@@ -1,7 +1,8 @@
 package vn.aeoc.crm.service.chat;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
+import vn.aeoc.base.util.QueryExecutor;
+
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,9 +31,7 @@ public class MessageService extends BaseService<MessageRepository, Message, Inte
     private final MessageReadInfoRepository readInfoRepo;
     private final FileStorageService fileStorageService;
 
-    @Lazy
-    @Autowired(required = false)
-    private ChatSocketHandler socketHandler;
+    private final ObjectProvider<ChatSocketHandler> socketHandlerProvider;
 
     private static final String UPLOAD_DIR = "uploads/chat/";
 
@@ -40,12 +39,14 @@ public class MessageService extends BaseService<MessageRepository, Message, Inte
                           ChatRepository chatRepo,
                           ChatParticipantRepository participantRepo,
                           MessageReadInfoRepository readInfoRepo,
-                          FileStorageService fileStorageService) {
-        super(repository);
+                          FileStorageService fileStorageService, QueryExecutor queryExecutor,
+                          ObjectProvider<ChatSocketHandler> socketHandlerProvider) {
+        super(repository, queryExecutor);
         this.chatRepo = chatRepo;
         this.participantRepo = participantRepo;
         this.readInfoRepo = readInfoRepo;
         this.fileStorageService = fileStorageService;
+        this.socketHandlerProvider = socketHandlerProvider;
     }
 
     // Cursor list
@@ -138,6 +139,7 @@ public class MessageService extends BaseService<MessageRepository, Message, Inte
                 saved.getMessageType()
         );
 
+        ChatSocketHandler socketHandler = socketHandlerProvider.getIfAvailable();
         if (socketHandler != null) {
             socketHandler.emitNewMessage(req.getChatId(), saved, senderName);
         }

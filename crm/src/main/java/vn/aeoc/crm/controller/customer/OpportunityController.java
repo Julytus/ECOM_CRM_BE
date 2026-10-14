@@ -1,6 +1,5 @@
 package vn.aeoc.crm.controller.customer;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.aeoc.base.config.extention.paging.Page;
@@ -16,6 +15,7 @@ import vn.aeoc.crm.data.response.OpportunityKanbanResponse;
 import vn.aeoc.crm.data.response.StageTransitionMetaResponse;
 import vn.aeoc.crm.service.other.NotificationService;
 import vn.aeoc.crm.service.customer.OpportunityService;
+import vn.aeoc.crm.service.auth.UserService;
 import vn.aeoc.crm.util.BranchFilter;
 import vn.aeoc.crm.util.Mapper;
 import vn.aeoc.entity.data.mysql.Notification;
@@ -30,11 +30,14 @@ public class OpportunityController extends BaseController {
 
     private static final String URI = "/opportunity/";
 
-    @Autowired
-    private OpportunityService service;
+    private final OpportunityService service;
+    private final NotificationService notificationService;
 
-    @Autowired
-    private NotificationService notificationService;
+    public OpportunityController(OpportunityService service, NotificationService notificationService, UserService userService) {
+        super(userService);
+        this.service = service;
+        this.notificationService = notificationService;
+    }
 
     /**
      * Danh sách cơ hội

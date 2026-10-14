@@ -1,5 +1,7 @@
 package vn.aeoc.crm.service.customer;
 
+import vn.aeoc.base.util.QueryExecutor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import vn.aeoc.base.config.extention.paging.Page;
@@ -13,8 +15,8 @@ import vn.aeoc.entity.data.mysql.customer.CallHistory;
 public class CallHistoryService extends
         BaseService<CallHistoryRepository, CallHistory, Integer> {
 
-    protected CallHistoryService(CallHistoryRepository repository) {
-        super(repository);
+    protected CallHistoryService(CallHistoryRepository repository, QueryExecutor queryExecutor) {
+        super(repository, queryExecutor);
     }
 
     public Page<CallHistory> getByCriteria(

@@ -1,7 +1,6 @@
 package vn.aeoc.crm.controller.other;
 
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +11,7 @@ import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.config.model.ApiResponse;
 import vn.aeoc.crm.controller.BaseController;
 import vn.aeoc.crm.data.report.*;
+import vn.aeoc.crm.service.auth.UserService;
 import vn.aeoc.crm.service.sale.ReportService;
 import vn.aeoc.crm.util.BranchFilter;
 import vn.aeoc.entity.data.mysql.auth.User;
@@ -25,8 +25,12 @@ public class ReportController extends BaseController {
 
     private static final String URI = "/report/";
 
-    @Autowired
-    private ReportService service;
+    private final ReportService service;
+
+    public ReportController(ReportService service, UserService userService) {
+        super(userService);
+        this.service = service;
+    }
 
     /**
      * Biểu đồ cột: khách hàng theo tháng

@@ -1,5 +1,7 @@
 package vn.aeoc.crm.service.customer;
 
+import vn.aeoc.base.util.QueryExecutor;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import vn.aeoc.base.exception.AppException;
@@ -28,8 +30,8 @@ public class CustomerExtraInfoService extends BaseService<
     public CustomerExtraInfoService(
             CustomerExtraInfoRepository repository,
             CustomerAttributeService attributeService
-    ) {
-        super(repository);
+    , QueryExecutor queryExecutor) {
+        super(repository, queryExecutor);
         this.attributeService = attributeService;
     }
 

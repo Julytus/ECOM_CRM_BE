@@ -1,5 +1,7 @@
 package vn.aeoc.crm.service.auth;
 
+import vn.aeoc.base.util.QueryExecutor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import vn.aeoc.base.config.extention.paging.Page;
@@ -16,8 +18,8 @@ public class ResourceService  extends BaseService<
         Integer> {
 
 
-    protected ResourceService(ResourceRepository repository) {
-        super(repository);
+    protected ResourceService(ResourceRepository repository, QueryExecutor queryExecutor) {
+        super(repository, queryExecutor);
     }
 
     public Page<Resource> getListResourceByCriteria(String name, Integer active, Pageable pageable) {

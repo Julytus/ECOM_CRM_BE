@@ -1,5 +1,6 @@
 package vn.aeoc.crm.repository.other;
 
+import org.jooq.DSLContext;
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
@@ -16,6 +17,10 @@ import static vn.entity.backend.tables.Branch.BRANCH;
 
 @Repository
 public class BranchRepository extends AbsMysqlRepository<BranchRecord, Branch, Integer> {
+    public BranchRepository(DSLContext dslContext) {
+        super(dslContext);
+    }
+
 
     @Override
     protected TableImpl<BranchRecord> getTable() {

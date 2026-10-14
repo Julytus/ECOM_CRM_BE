@@ -1,6 +1,5 @@
 package vn.aeoc.crm.controller.sale;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.aeoc.base.config.extention.paging.Page;
@@ -14,6 +13,7 @@ import vn.aeoc.crm.data.constant.OrderStatus;
 import vn.aeoc.crm.data.constant.PaymentStatus;
 import vn.aeoc.crm.data.request.OrderRequest;
 import vn.aeoc.crm.data.response.OrderResponse;
+import vn.aeoc.crm.service.auth.UserService;
 import vn.aeoc.crm.service.sale.OrderService;
 import vn.aeoc.crm.util.Mapper;
 import vn.aeoc.crm.util.SecurityUtils;
@@ -25,8 +25,12 @@ import java.security.Principal;
 public class OrderController extends BaseController {
     private static final String URI = "/order/";
 
-    @Autowired
-    private OrderService orderService;
+    private final OrderService orderService;
+
+    public OrderController(OrderService orderService, UserService userService) {
+        super(userService);
+        this.orderService = orderService;
+    }
 
     @GetMapping("/order/list")
     public ResponseEntity<ApiResponse<Page<Order>>> list(

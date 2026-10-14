@@ -7,6 +7,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import vn.aeoc.crm.config.property.ApiKeyProperties;
@@ -23,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class JWTService {
@@ -136,8 +138,7 @@ public class JWTService {
                     .signWith(getSignInKey())
                     .compact();
         } catch (JsonProcessingException e) {
-            System.out.println("error jwt =>" + e.getMessage());
-            e.printStackTrace();
+            log.error("Error building JWT: {}", e.getMessage(), e);
             return null;
         }
     }

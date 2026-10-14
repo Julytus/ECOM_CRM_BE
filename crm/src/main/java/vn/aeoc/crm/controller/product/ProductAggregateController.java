@@ -1,7 +1,6 @@
 package vn.aeoc.crm.controller.product;
 
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -12,6 +11,7 @@ import vn.aeoc.base.config.model.ApiResponse;
 import vn.aeoc.crm.controller.BaseController;
 import vn.aeoc.crm.data.request.ProductAggregateRequest;
 import vn.aeoc.crm.data.response.ProductAggregateResult;
+import vn.aeoc.crm.service.auth.UserService;
 import vn.aeoc.crm.service.product.ProductAggregateService;
 import vn.aeoc.crm.util.Mapper;
 import vn.aeoc.entity.data.mysql.auth.User;
@@ -21,7 +21,12 @@ import java.security.Principal;
 @RestController
 public class ProductAggregateController extends BaseController {
     private static final String URI = "/product/";
-    @Autowired private ProductAggregateService productAggregateService;
+    private final ProductAggregateService productAggregateService;
+
+    public ProductAggregateController(ProductAggregateService productAggregateService, UserService userService) {
+        super(userService);
+        this.productAggregateService = productAggregateService;
+    }
 
     @PostMapping("/product/create-full")
     public ResponseEntity<ApiResponse<ProductAggregateResult>> createFull(

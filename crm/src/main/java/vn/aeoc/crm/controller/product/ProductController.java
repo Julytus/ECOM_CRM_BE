@@ -1,6 +1,5 @@
 package vn.aeoc.crm.controller.product;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.aeoc.base.config.extention.paging.Page;
@@ -10,6 +9,7 @@ import vn.aeoc.base.util.CommonUtils;
 import vn.aeoc.crm.controller.BaseController;
 import vn.aeoc.crm.data.request.ProductListRequest;
 import vn.aeoc.crm.data.response.ProductDetailResponse;
+import vn.aeoc.crm.service.auth.UserService;
 import vn.aeoc.crm.service.product.ProductService;
 import vn.aeoc.crm.util.BranchFilter;
 import vn.aeoc.crm.util.Mapper;
@@ -23,8 +23,12 @@ public class ProductController extends BaseController {
 
     private static final String URI = "/product/";
 
-    @Autowired
-    private ProductService productService;
+    private final ProductService productService;
+
+    public ProductController(ProductService productService, UserService userService) {
+        super(userService);
+        this.productService = productService;
+    }
 
     @GetMapping("/product/list")
     public ResponseEntity<ApiResponse<Page<Product>>> list(

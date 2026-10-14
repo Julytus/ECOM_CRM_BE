@@ -1,5 +1,7 @@
 package vn.aeoc.crm.service.product;
 
+import vn.aeoc.base.util.QueryExecutor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import vn.aeoc.base.config.extention.paging.Page;
@@ -25,8 +27,8 @@ public class ProductService extends BaseService<
 
     private final ProductVariantRepository productVariantRepository;
 
-    public ProductService(ProductRepository repository, ProductVariantRepository productVariantRepository) {
-        super(repository);
+    public ProductService(ProductRepository repository, ProductVariantRepository productVariantRepository, QueryExecutor queryExecutor) {
+        super(repository, queryExecutor);
         this.productVariantRepository = productVariantRepository;
     }
 

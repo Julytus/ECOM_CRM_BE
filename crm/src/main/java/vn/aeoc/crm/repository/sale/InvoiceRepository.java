@@ -1,5 +1,6 @@
 package vn.aeoc.crm.repository.sale;
 
+import org.jooq.DSLContext;
 import org.apache.commons.lang3.StringUtils;
 import org.jooq.Condition;
 import org.jooq.Field;
@@ -27,6 +28,10 @@ import static vn.entity.backend.tables.User.USER;
 
 @Repository
 public class InvoiceRepository extends AbsMysqlRepository<InvoiceRecord, Invoice, Integer> {
+    public InvoiceRepository(DSLContext dslContext) {
+        super(dslContext);
+    }
+
     @Override
     protected TableImpl<InvoiceRecord> getTable() {
         return INVOICE;

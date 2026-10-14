@@ -1,5 +1,6 @@
 package vn.aeoc.crm.repository.product;
 
+import org.jooq.DSLContext;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.Table;
@@ -20,6 +21,10 @@ import static vn.entity.backend.tables.ProductWishlist.PRODUCT_WISHLIST;
 @Repository
 public class ProductWishlistRepository
         extends AbsMysqlRepository<ProductWishlistRecord, ProductWishlist, Integer> {
+    public ProductWishlistRepository(DSLContext dslContext) {
+        super(dslContext);
+    }
+
 
     @Override
     protected TableImpl<ProductWishlistRecord> getTable() {

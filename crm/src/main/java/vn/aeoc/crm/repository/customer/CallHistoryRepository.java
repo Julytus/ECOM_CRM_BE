@@ -1,5 +1,6 @@
 package vn.aeoc.crm.repository.customer;
 
+import org.jooq.DSLContext;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.Table;
@@ -21,6 +22,10 @@ import static vn.entity.backend.tables.User.USER;
 
 @Repository
 public class CallHistoryRepository extends AbsMysqlRepository<CallHistoryRecord, CallHistory, Integer> {
+    public CallHistoryRepository(DSLContext dslContext) {
+        super(dslContext);
+    }
+
     @Override
     protected TableImpl<CallHistoryRecord> getTable() {
         return CALL_HISTORY;

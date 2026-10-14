@@ -3,7 +3,6 @@ package vn.aeoc.crm.repository.auth;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import vn.aeoc.base.exception.AppException;
 import vn.aeoc.base.util.CommonUtils;
@@ -20,8 +19,11 @@ import static vn.entity.backend.tables.Resource.RESOURCE;
 
 @Repository
 public class PermissionRepository {
-    @Autowired
-    private DSLContext dslContext;
+    private final DSLContext dslContext;
+
+    public PermissionRepository(DSLContext dslContext) {
+        this.dslContext = dslContext;
+    }
 
     public static List<Field<?>> getPermissionFields() {
         return asList(

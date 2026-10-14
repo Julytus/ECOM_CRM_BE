@@ -1,6 +1,5 @@
 package vn.aeoc.crm.controller.chat;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.aeoc.base.config.extention.paging.Cursor;
@@ -26,11 +25,12 @@ import java.util.List;
 @RequestMapping("/chat")
 public class ChatController extends BaseController {
 
-    @Autowired
-    private ChatService service;
+    private final ChatService service;
 
-    @Autowired
-    private UserService userService;
+    public ChatController(ChatService service, UserService userService) {
+        super(userService);
+        this.service = service;
+    }
 
     @GetMapping("/list-cursor")
     public ResponseEntity<ApiResponse<Cursor<ChatView>>> listCursor(

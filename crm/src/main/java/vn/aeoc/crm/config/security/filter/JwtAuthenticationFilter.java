@@ -4,7 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import vn.aeoc.base.config.web.PrincipalRequestWrapper;
@@ -19,15 +19,18 @@ import java.util.Arrays;
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private JWTService jwtService;
+    private final JWTService jwtService;
 
     // Danh sách các API không cần kiểm tra token
     private static final List<String> WHITE_LIST_API = Arrays.asList(
             "/user/create",
-            "/user/authenticate"
+            "/user/authenticate",
+            "/v3/api-docs",
+            "/v3/api-docs.yaml",
+            "/swagger-ui.html"
             // Thêm các đường dẫn khác vào đây nếu cần
     );
 
@@ -42,20 +45,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        String apiKey = request.getHeader("x-api-key");
+        if (apiKey != null && !apiKey.isBlank() && jwtService.isValidApiKey(apiKey)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String token = extractTokenFromRequest(request);
 
         try {
-            if (token != null) {
-                if (jwtService.isTokenExpired(token)) {
-                    HttpResponseUtils.writeError(response, request, ErrorCode.TOKEN_EXPIRED);
-                    return;
-                }
-
-                Principal principal = jwtService.extractPrincipal(token, request);
-                if (principal != null) {
-                    request = new PrincipalRequestWrapper(request, principal);
-                }
+            if (token == null) {
+                HttpResponseUtils.writeError(response, request, ErrorCode.LOGIN);
+                return;
             }
+
+            if (jwtService.isTokenExpired(token)) {
+                HttpResponseUtils.writeError(response, request, ErrorCode.TOKEN_EXPIRED);
+                return;
+            }
+
+            Principal principal = jwtService.extractPrincipal(token, request);
+            if (principal == null) {
+                HttpResponseUtils.writeError(response, request, ErrorCode.UNAUTHORIZED);
+                return;
+            }
+            request = new PrincipalRequestWrapper(request, principal);
 
             filterChain.doFilter(request, response);
 
@@ -72,7 +86,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean isWhiteListed(String requestUri) {
-        return WHITE_LIST_API.contains(requestUri);
+        return WHITE_LIST_API.contains(requestUri)
+                || requestUri.startsWith("/swagger-ui/")
+                || requestUri.startsWith("/v3/api-docs/");
     }
 
     private String extractTokenFromRequest(HttpServletRequest request) {

@@ -1,5 +1,7 @@
 package vn.aeoc.crm.service.customer;
 
+import vn.aeoc.base.util.QueryExecutor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import vn.aeoc.base.config.extention.paging.Page;
@@ -14,8 +16,8 @@ public class CustomerSourceService extends
         BaseService<CustomerSourceRepository, CustomerSource, Integer> {
 
 
-    protected CustomerSourceService(CustomerSourceRepository repository) {
-        super(repository);
+    protected CustomerSourceService(CustomerSourceRepository repository, QueryExecutor queryExecutor) {
+        super(repository, queryExecutor);
     }
 
     public Page<CustomerSource> getByCriteria(

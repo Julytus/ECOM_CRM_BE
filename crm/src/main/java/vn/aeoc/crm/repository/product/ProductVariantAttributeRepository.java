@@ -1,5 +1,6 @@
 package vn.aeoc.crm.repository.product;
 
+import org.jooq.DSLContext;
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
@@ -17,6 +18,10 @@ import static vn.entity.backend.tables.ProductVariantAttribute.PRODUCT_VARIANT_A
 @Repository
 public class ProductVariantAttributeRepository
         extends AbsMysqlRepository<ProductVariantAttributeRecord, ProductVariantAttribute, Integer> {
+    public ProductVariantAttributeRepository(DSLContext dslContext) {
+        super(dslContext);
+    }
+
 
     @Override
     protected TableImpl<ProductVariantAttributeRecord> getTable() {

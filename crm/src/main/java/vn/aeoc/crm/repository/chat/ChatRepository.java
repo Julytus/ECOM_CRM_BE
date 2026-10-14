@@ -1,5 +1,6 @@
 package vn.aeoc.crm.repository.chat;
 
+import org.jooq.DSLContext;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.impl.TableImpl;
@@ -27,10 +28,8 @@ import static vn.entity.backend.tables.User.USER;
 
 @Repository
 public class ChatRepository extends AbsMysqlRepository<ChatRecord, Chat, Integer> {
-
-    public ChatRepository() {
-        this.pojoClass = Chat.class;
-        this.fieldID   = CHAT.ID;
+    public ChatRepository(DSLContext dslContext) {
+        super(dslContext);
     }
 
     @Override

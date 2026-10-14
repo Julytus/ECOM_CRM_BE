@@ -1,5 +1,6 @@
 package vn.aeoc.crm.repository.customer;
 
+import org.jooq.DSLContext;
 import org.jooq.Condition;
 import org.jooq.impl.TableImpl;
 import org.springframework.stereotype.Repository;
@@ -17,6 +18,10 @@ import static vn.entity.backend.tables.CustomerSource.CUSTOMER_SOURCE;
 @Repository
 public class CustomerSourceRepository
         extends AbsMysqlRepository<CustomerSourceRecord, CustomerSource, Integer> {
+    public CustomerSourceRepository(DSLContext dslContext) {
+        super(dslContext);
+    }
+
 
     @Override
     protected TableImpl<CustomerSourceRecord> getTable() {

@@ -1,12 +1,12 @@
 package vn.aeoc.crm.controller.product;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.config.model.ApiResponse;
 import vn.aeoc.crm.controller.BaseController;
+import vn.aeoc.crm.service.auth.UserService;
 import vn.aeoc.crm.service.product.ProductVariantAttributeService;
 import vn.aeoc.crm.util.Mapper;
 import vn.aeoc.entity.data.mysql.product.ProductVariantAttribute;
@@ -18,8 +18,12 @@ public class ProductVariantAttributeController extends BaseController {
 
     private static final String URI = "/product-variant-attribute/";
 
-    @Autowired
-    private ProductVariantAttributeService productVariantAttributeService;
+    private final ProductVariantAttributeService productVariantAttributeService;
+
+    public ProductVariantAttributeController(ProductVariantAttributeService productVariantAttributeService, UserService userService) {
+        super(userService);
+        this.productVariantAttributeService = productVariantAttributeService;
+    }
 
     @GetMapping("/product-variant-attribute/list")
     public ResponseEntity<ApiResponse<Page<ProductVariantAttribute>>> list(

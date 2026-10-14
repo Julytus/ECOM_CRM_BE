@@ -1,5 +1,7 @@
 package vn.aeoc.crm.service.sale;
 
+import vn.aeoc.base.util.QueryExecutor;
+
 import org.springframework.stereotype.Service;
 import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
@@ -13,8 +15,8 @@ import java.util.List;
 @Service
 public class BoughtServiceItemService extends BaseService<BoughtServiceItemRepository, BoughtService, Integer> {
 
-     public BoughtServiceItemService(BoughtServiceItemRepository repository) {
-        super(repository);
+     public BoughtServiceItemService(BoughtServiceItemRepository repository, QueryExecutor queryExecutor) {
+        super(repository, queryExecutor);
     }
 
     public Page<BoughtService> getByCriteria(

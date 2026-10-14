@@ -1,5 +1,6 @@
 package vn.aeoc.crm.repository.product;
 
+import org.jooq.DSLContext;
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
@@ -17,6 +18,10 @@ import static vn.entity.backend.tables.ProductReview.PRODUCT_REVIEW;
 @Repository
 public class ProductReviewRepository
         extends AbsMysqlRepository<ProductReviewRecord, ProductReview, Integer> {
+    public ProductReviewRepository(DSLContext dslContext) {
+        super(dslContext);
+    }
+
 
     @Override
     protected TableImpl<ProductReviewRecord> getTable() {

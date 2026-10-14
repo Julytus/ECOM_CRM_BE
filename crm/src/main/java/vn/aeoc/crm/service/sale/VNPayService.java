@@ -78,7 +78,7 @@ public class VNPayService {
                     query.append('=');
                     query.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
                 } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
+                    log.error("Failed to URL-encode VNPay hash field: {}", fieldName, e);
                 }
                 if (itr.hasNext()) {
                     query.append('&');

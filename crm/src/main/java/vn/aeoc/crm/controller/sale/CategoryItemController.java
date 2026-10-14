@@ -1,6 +1,5 @@
 package vn.aeoc.crm.controller.sale;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.aeoc.base.config.extention.paging.Page;
@@ -8,6 +7,7 @@ import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.config.model.ApiResponse;
 import vn.aeoc.base.util.CommonUtils;
 import vn.aeoc.crm.controller.BaseController;
+import vn.aeoc.crm.service.auth.UserService;
 import vn.aeoc.crm.service.sale.CategoryItemService;
 import vn.aeoc.crm.util.BranchFilter;
 import vn.aeoc.crm.util.Mapper;
@@ -22,8 +22,12 @@ public class CategoryItemController extends BaseController {
 
     private static final String URI = "/categoryItem/";
 
-    @Autowired
-    private CategoryItemService service;
+    private final CategoryItemService service;
+
+    public CategoryItemController(CategoryItemService service, UserService userService) {
+        super(userService);
+        this.service = service;
+    }
 /**
  * Level: 0 - lấy cha, 1 - lấy con, 2 - lấy tất cả
  *

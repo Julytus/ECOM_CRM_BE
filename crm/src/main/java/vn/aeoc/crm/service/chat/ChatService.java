@@ -1,5 +1,7 @@
 package vn.aeoc.crm.service.chat;
 
+import vn.aeoc.base.util.QueryExecutor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.aeoc.base.config.extention.paging.Cursor;
@@ -34,8 +36,8 @@ public class ChatService extends BaseService<ChatRepository, Chat, Integer> {
                        ChatParticipantRepository participantRepository,
                        UserRepository userRepository,
                        MessageReadInfoRepository readInfoRepository,
-                       ChatSocketHandler chatSocketHandler) {
-        super(repository);
+                       ChatSocketHandler chatSocketHandler, QueryExecutor queryExecutor) {
+        super(repository, queryExecutor);
         this.participantRepository = participantRepository;
         this.userRepository = userRepository;
         this.readInfoRepository = readInfoRepository;

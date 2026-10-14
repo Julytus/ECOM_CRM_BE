@@ -1,6 +1,5 @@
 package vn.aeoc.crm.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import vn.aeoc.base.exception.AppException;
 import vn.aeoc.crm.service.auth.UserService;
@@ -15,8 +14,11 @@ import static vn.aeoc.crm.util.SecurityUtils.userId;
 
 @Service
 public class BaseController {
-    @Autowired
-    private UserService userService;
+    protected final UserService userService;
+
+    protected BaseController(UserService userService) {
+        this.userService = userService;
+    }
 
     /**
      * Kiểm tra quyền

@@ -1,6 +1,5 @@
 package vn.aeoc.crm.repository.sale;
 
-
 import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import org.jooq.Condition;

@@ -1,5 +1,6 @@
 package vn.aeoc.crm.repository.sale;
 
+import org.jooq.DSLContext;
 import org.jooq.impl.TableImpl;
 import org.springframework.stereotype.Repository;
 import vn.aeoc.base.repo.AbsMysqlRepository;
@@ -11,6 +12,10 @@ import static vn.entity.backend.tables.InvoiceVoucher.INVOICE_VOUCHER;
 
 @Repository
 public class InvoiceVoucherRepository extends AbsMysqlRepository<InvoiceVoucherRecord, InvoiceVoucher, Integer> {
+    public InvoiceVoucherRepository(DSLContext dslContext) {
+        super(dslContext);
+    }
+
 
     @Override
     protected TableImpl<InvoiceVoucherRecord> getTable() {

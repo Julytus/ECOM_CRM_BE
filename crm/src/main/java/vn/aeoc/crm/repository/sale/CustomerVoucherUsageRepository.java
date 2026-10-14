@@ -1,7 +1,6 @@
 package vn.aeoc.crm.repository.sale;
 
 import org.jooq.DSLContext;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import vn.aeoc.base.util.CommonUtils;
 
@@ -10,8 +9,11 @@ import static vn.entity.backend.tables.CustomerVoucherUsage.CUSTOMER_VOUCHER_USA
 @Repository
 public class CustomerVoucherUsageRepository {
 
-    @Autowired
-    private DSLContext dsl;
+    private final DSLContext dsl;
+
+    public CustomerVoucherUsageRepository(DSLContext dsl) {
+        this.dsl = dsl;
+    }
 
     public Integer getUsedCount(Integer voucherId, Integer customerId) {
         return dsl.select(CUSTOMER_VOUCHER_USAGE.USED_COUNT)

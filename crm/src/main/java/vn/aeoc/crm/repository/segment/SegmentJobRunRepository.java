@@ -1,5 +1,6 @@
 package vn.aeoc.crm.repository.segment;
 
+import org.jooq.DSLContext;
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
@@ -19,6 +20,10 @@ public class SegmentJobRunRepository extends AbsMysqlRepository<
         SegmentJobRunRecord,
         SegmentJobRunRow,
         Integer> {
+    public SegmentJobRunRepository(DSLContext dslContext) {
+        super(dslContext);
+    }
+
 
     @Override
     protected TableImpl<SegmentJobRunRecord> getTable() {

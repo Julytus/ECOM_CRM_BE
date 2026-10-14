@@ -1,5 +1,6 @@
 package vn.aeoc.crm.repository.customer;
 
+import org.jooq.DSLContext;
 import org.apache.commons.lang3.StringUtils;
 import org.jooq.Condition;
 import org.jooq.Field;
@@ -23,6 +24,10 @@ import static vn.entity.backend.tables.User.USER;
 @Repository
 public class CustomerRepository
         extends AbsMysqlRepository<CustomerRecord, Customer, Integer> {
+    public CustomerRepository(DSLContext dslContext) {
+        super(dslContext);
+    }
+
     /* ==============================
             CONDITION
        ============================== */

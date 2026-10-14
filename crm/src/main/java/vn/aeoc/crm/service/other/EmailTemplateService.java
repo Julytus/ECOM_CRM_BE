@@ -1,5 +1,7 @@
 package vn.aeoc.crm.service.other;
 
+import vn.aeoc.base.util.QueryExecutor;
+
 import org.springframework.stereotype.Service;
 import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
@@ -13,8 +15,8 @@ import java.util.List;
 public class EmailTemplateService
         extends BaseService<EmailTemplateRepository, EmailTemplate, Integer> {
 
-    public EmailTemplateService(EmailTemplateRepository repository) {
-        super(repository);
+    public EmailTemplateService(EmailTemplateRepository repository, QueryExecutor queryExecutor) {
+        super(repository, queryExecutor);
     }
 
     /* ==============================

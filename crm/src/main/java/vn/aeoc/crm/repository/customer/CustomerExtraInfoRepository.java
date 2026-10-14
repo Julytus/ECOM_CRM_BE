@@ -1,5 +1,6 @@
 package vn.aeoc.crm.repository.customer;
 
+import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
@@ -23,6 +24,10 @@ public class CustomerExtraInfoRepository extends AbsMysqlRepository<
         CustomerExtraInfoRecord,
         CustomerExtraInfo,
         Integer> {
+    public CustomerExtraInfoRepository(DSLContext dslContext) {
+        super(dslContext);
+    }
+
     @Override
     protected TableImpl<CustomerExtraInfoRecord> getTable() {
         return CUSTOMER_EXTRA_INFO;

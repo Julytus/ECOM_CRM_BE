@@ -1,5 +1,7 @@
 package vn.aeoc.crm.service.other;
 
+import vn.aeoc.base.util.QueryExecutor;
+
 import org.springframework.stereotype.Service;
 import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
@@ -13,8 +15,8 @@ public class BranchService extends BaseService<
         Branch,
         Integer> {
 
-    public BranchService(BranchRepository repository) {
-        super(repository);
+    public BranchService(BranchRepository repository, QueryExecutor queryExecutor) {
+        super(repository, queryExecutor);
     }
 
     public Page<Branch> getByCriteria(

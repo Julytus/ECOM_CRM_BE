@@ -1,5 +1,7 @@
 package vn.aeoc.crm.service.customer;
 
+import vn.aeoc.base.util.QueryExecutor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.aeoc.base.config.extention.paging.Page;
@@ -37,8 +39,8 @@ public class CustomerService extends BaseService<
             CustomerAttributeService attributeService,
             OpportunityRepository opportunityRepository,
             ThreeLayerCacheTemplate cacheTemplate
-    ) {
-        super(repository);
+    , QueryExecutor queryExecutor) {
+        super(repository, queryExecutor);
         this.extraInfoService = extraInfoService;
         this.attributeService = attributeService;
         this.opportunityRepository = opportunityRepository;

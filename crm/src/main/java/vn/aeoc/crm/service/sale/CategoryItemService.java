@@ -1,5 +1,7 @@
 package vn.aeoc.crm.service.sale;
 
+import vn.aeoc.base.util.QueryExecutor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import vn.aeoc.base.config.extention.paging.Page;
@@ -13,8 +15,8 @@ import java.util.List;
 @Slf4j(topic = "CATEGORY-ITEM-SERVICE")
 @Service
 public class CategoryItemService extends BaseService<CategoryItemRepository, CategoryItem, Integer> {
-    protected CategoryItemService(CategoryItemRepository repository) {
-        super(repository);
+    protected CategoryItemService(CategoryItemRepository repository, QueryExecutor queryExecutor) {
+        super(repository, queryExecutor);
     }
 
     public Page<CategoryItem> getListCategoryItem(String keyword, Integer type, Integer active,

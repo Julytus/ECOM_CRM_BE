@@ -1,5 +1,6 @@
 package vn.aeoc.crm.repository.auth;
 
+import org.jooq.DSLContext;
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
@@ -16,6 +17,10 @@ import static vn.entity.backend.tables.Role.ROLE;
 
 @Repository
 public class RoleRepository extends AbsMysqlRepository<RoleRecord, Role, Integer> {
+    public RoleRepository(DSLContext dslContext) {
+        super(dslContext);
+    }
+
 
     @Override
     protected TableImpl<RoleRecord> getTable() {

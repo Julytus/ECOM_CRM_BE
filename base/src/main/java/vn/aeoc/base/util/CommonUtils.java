@@ -1,5 +1,6 @@
 package vn.aeoc.base.util;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jooq.JSON;
 import org.jooq.exception.DataException;
@@ -12,6 +13,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 public class CommonUtils {
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -107,7 +109,7 @@ public class CommonUtils {
             JSON jsonData = JSON.valueOf(jsonString);
             return jsonData;
         } catch (DataException e) {
-            System.err.println("Chuỗi JSON không hợp lệ: " + e.getMessage());
+            log.error("Chuỗi JSON không hợp lệ: {}", e.getMessage());
             return null;
         }
     }
