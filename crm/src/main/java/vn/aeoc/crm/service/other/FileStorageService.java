@@ -1,9 +1,6 @@
 package vn.aeoc.crm.service.other;
 
-import io.minio.BucketExistsArgs;
-import io.minio.MakeBucketArgs;
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
+import io.minio.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,6 +31,7 @@ public class FileStorageService {
             boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build());
             if (!found) {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
+                setPublicBucketPolicy();
             }
 
             minioClient.putObject(
@@ -51,5 +49,28 @@ public class FileStorageService {
             log.error(e.getMessage());
             throw new AppException(ErrorCode.UPLOAD_FILE_FAILED);
         }
+    }
+
+    private void setPublicBucketPolicy() throws Exception {
+        String policy = """
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": "*",
+              "Action": ["s3:GetObject"],
+              "Resource": ["arn:aws:s3:::%s/*"]
+            }
+          ]
+        }
+        """.formatted(bucket);
+
+        minioClient.setBucketPolicy(
+                SetBucketPolicyArgs.builder()
+                        .bucket(bucket)
+                        .config(policy)
+                        .build()
+        );
     }
 }

@@ -21,7 +21,7 @@ public class ProductAggregateRequest {
     /** Existing UI sends active as 0/1; backend schema column is STATUS. */
     @NotNull private Integer status;
     private String thumbnail;
-    private String image;
+    private List<String> image;
 
     @Valid private List<AttributeInput> attributes = new ArrayList<>();
     @Valid private List<VariantInput> variants = new ArrayList<>();

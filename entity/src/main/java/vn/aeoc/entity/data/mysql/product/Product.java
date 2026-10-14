@@ -23,4 +23,22 @@ public class Product {
     private Double originalMinPrice = 0.0;
     private Double originalMaxPrice = 0.0;
     private Integer branchId;
+
+    public Product(Product product) {
+        this.id = product.id;
+        this.name = product.name;
+        this.description = product.description;
+        this.categoryId = product.categoryId;
+        this.categoryName = product.categoryName;
+        this.avgRating = product.avgRating;
+        this.image = product.image;
+        this.thumbnail = product.thumbnail;
+        this.status = product.status;
+        this.minPrice = product.minPrice;
+        this.maxPrice = product.maxPrice;
+        this.originalMinPrice = product.originalMinPrice;
+        this.originalMaxPrice = product.originalMaxPrice;
+    }
+
+    public Product() {}
 }

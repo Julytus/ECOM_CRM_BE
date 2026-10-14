@@ -4,9 +4,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
+import vn.aeoc.base.constant.ErrorCode;
+import vn.aeoc.base.exception.AppException;
 import vn.aeoc.base.service.BaseService;
 import vn.aeoc.crm.repository.product.ProductWishlistRepository;
 import vn.aeoc.entity.data.mysql.product.ProductWishlist;
+
+import java.util.List;
 
 @Slf4j(topic = "PRODUCT-WISHLIST-SERVICE")
 @Service
@@ -19,16 +23,15 @@ public class ProductWishlistService extends BaseService<
         super(repository);
     }
 
-    public Page<ProductWishlist> getByCriteria(
-            Integer userId,
-            Integer productId,
-            Pageable pageable
+    public List<ProductWishlist> getByCriteria(
+            Integer userId
     ) {
-        return pageQuery(
-                pageable,
-                () -> repository.getByCriteria(userId, productId, pageable),
-                () -> repository.countByCriteria(userId, productId)
-        );
+        return repository.getByCriteria(userId);
+    }
+
+    public void add(Integer userId, Integer productId) {
+
+        repository.insertWishlist(userId, productId);
     }
 
     public int deleteByCompositeKey(Integer userId, Integer productId) {

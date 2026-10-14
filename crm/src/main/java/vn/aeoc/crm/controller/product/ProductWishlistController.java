@@ -9,6 +9,7 @@ import vn.aeoc.base.config.model.ApiResponse;
 import vn.aeoc.crm.controller.BaseController;
 import vn.aeoc.crm.service.product.ProductWishlistService;
 import vn.aeoc.crm.util.Mapper;
+import vn.aeoc.crm.util.SecurityUtils;
 import vn.aeoc.entity.data.mysql.product.ProductWishlist;
 
 import java.security.Principal;
@@ -16,43 +17,36 @@ import java.security.Principal;
 @RestController
 public class ProductWishlistController extends BaseController {
 
-    private static final String URI = "/product-wishlist/";
+    private static final String URI = "/wishlist/";
 
     @Autowired
     private ProductWishlistService productWishlistService;
 
-    @GetMapping("/product-wishlist/list")
-    public ResponseEntity<ApiResponse<Page<ProductWishlist>>> list(
-            @RequestParam(required = false) Integer userId,
-            @RequestParam(required = false) Integer productId,
-            Pageable pageable,
-            Principal principal
-    ) {
-        checkPermission(principal, URI, "VIEW");
-        var result = productWishlistService.getByCriteria(
-                userId, productId, pageable
-        );
-        return Mapper.map(result, ApiResponse::okEntity);
+    @GetMapping("/wishlist")
+    public ResponseEntity<ApiResponse<?>> getByUser(
+            Principal principal) {
+
+        return ResponseEntity.ok(
+                ApiResponse.ok(productWishlistService.getByCriteria(SecurityUtils.userId(principal))));
     }
 
-    @PostMapping("/product-wishlist/update")
-    public ResponseEntity<ApiResponse<ProductWishlist>> update(
-            @RequestBody ProductWishlist request,
+    @PostMapping("/wishlist/add")
+    public ResponseEntity<ApiResponse<String>> update(
+            @RequestBody Integer productId,
             Principal principal
     ) {
-        checkPermission(principal, URI, "ADD");
-        ProductWishlist result = productWishlistService.insert(request);
-        return Mapper.map(result, ApiResponse::okEntity);
+//        checkPermission(principal, URI, "ADD");
+        productWishlistService.add(SecurityUtils.userId(principal), productId);
+        return Mapper.map("Đã thêm sản phẩm vào yêu thích", ApiResponse::okEntity);
     }
 
-    @DeleteMapping("/product-wishlist/delete")
+    @DeleteMapping("/wishlist/remove")
     public ResponseEntity<ApiResponse<Integer>> delete(
-            @RequestParam Integer userId,
             @RequestParam Integer productId,
             Principal principal
     ) {
-        checkPermission(principal, URI, "DELETE");
-        var result = productWishlistService.deleteByCompositeKey(userId, productId);
+//        checkPermission(principal, URI, "DELETE");
+        var result = productWishlistService.deleteByCompositeKey(SecurityUtils.userId(principal), productId);
         return Mapper.map(result, ApiResponse::okEntity);
     }
 }

@@ -1,5 +1,6 @@
 package vn.aeoc.crm.service.product;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.jooq.DSLContext;
 import org.jooq.Query;
 import org.springframework.stereotype.Service;
@@ -15,13 +16,17 @@ import static vn.entity.backend.tables.ProductAttribute.PRODUCT_ATTRIBUTE;
 import static vn.entity.backend.tables.AttributeValue.ATTRIBUTE_VALUE;
 import static vn.entity.backend.tables.ProductVariant.PRODUCT_VARIANT;
 import static vn.entity.backend.tables.ProductVariantAttribute.PRODUCT_VARIANT_ATTRIBUTE;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class ProductAggregateService {
     private static final int MAX_VARIANTS = 5000;
+    private final ObjectMapper objectMapper;
     private final DSLContext dsl;
 
-    public ProductAggregateService(DSLContext dsl) { this.dsl = dsl; }
+    public ProductAggregateService(ObjectMapper objectMapper, DSLContext dsl) {
+        this.objectMapper = objectMapper;
+        this.dsl = dsl; }
 
     /** Create when request.id is null; otherwise synchronize the complete aggregate. */
     @Transactional
@@ -49,7 +54,7 @@ public class ProductAggregateService {
                     .set(PRODUCT.CATEGORY_ID, request.getCategoryId())
                     .set(PRODUCT.STATUS, request.getStatus())
                     .set(PRODUCT.THUMBNAIL, request.getThumbnail())
-                    .set(PRODUCT.IMAGE, request.getImage())
+                    .set(PRODUCT.IMAGE, toJson(request.getImage()))
                     .set(PRODUCT.BRANCH_ID, branchId)
                     .returningResult(PRODUCT.ID).fetchOne().get(PRODUCT.ID);
         } else {
@@ -69,7 +74,7 @@ public class ProductAggregateService {
                     .set(PRODUCT.ORIGINAL_MIN_PRICE, originalMinPrice)
                     .set(PRODUCT.ORIGINAL_MAX_PRICE, originalMaxPrice)
                     .set(PRODUCT.THUMBNAIL, request.getThumbnail())
-                    .set(PRODUCT.IMAGE, request.getImage())
+                    .set(PRODUCT.IMAGE, toJson(request.getImage()))
                     .where(PRODUCT.ID.eq(productId)).execute();
         }
 
@@ -261,5 +266,15 @@ public class ProductAggregateService {
     private static <T> List<T> safe(List<T> list) { return list == null ? List.of() : list; }
     private static String optionKey(String fieldName, String value) {
         return fieldName.trim().toLowerCase(Locale.ROOT) + "::" + value.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private String toJson(List<String> images) {
+        try {
+            return objectMapper.writeValueAsString(
+                    images == null ? List.of() : images
+            );
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Cannot serialize product images", e);
+        }
     }
 }

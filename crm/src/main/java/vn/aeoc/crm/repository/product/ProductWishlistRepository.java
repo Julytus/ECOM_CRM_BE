@@ -27,17 +27,12 @@ public class ProductWishlistRepository
     }
 
     private Condition getWhereCondition(
-            Integer userId,
-            Integer productId
+            Integer userId
     ) {
         Condition condition = DSL.trueCondition();
 
-        if (CommonUtils.NVL(userId) > 0) {
+        if (CommonUtils.NVL(userId) >= 0) {
             condition = condition.and(PRODUCT_WISHLIST.USER_ID.eq(userId));
-        }
-
-        if (CommonUtils.NVL(productId) > 0) {
-            condition = condition.and(PRODUCT_WISHLIST.PRODUCT_ID.eq(productId));
         }
 
         return condition;
@@ -54,32 +49,36 @@ public class ProductWishlistRepository
     }
 
     public List<ProductWishlist> getByCriteria(
-            Integer userId,
-            Integer productId,
-            Pageable pageable
+            Integer userId
     ) {
-        Condition condition = getWhereCondition(userId, productId);
+        Condition condition = getWhereCondition(userId);
         return getListByCriteriaWithJoin(
                 getJoinFields(),
                 getJoinTable(),
                 condition,
-                PRODUCT_WISHLIST.CREATED_AT.desc(),
-                pageable
+                PRODUCT_WISHLIST.CREATED_AT.desc()
         );
     }
 
     public Long countByCriteria(
-            Integer userId,
-            Integer productId
+            Integer userId
     ) {
-        Condition condition = getWhereCondition(userId, productId);
+        Condition condition = getWhereCondition(userId);
         return getCountWithCriteria(condition);
     }
 
-    public int deleteByUserIdAndProductId(Integer userId, Integer productId) {
-        return dslContext.deleteFrom(PRODUCT_WISHLIST)
-                .where(PRODUCT_WISHLIST.USER_ID.eq(userId))
-                .and(PRODUCT_WISHLIST.PRODUCT_ID.eq(productId))
+    public Integer deleteByUserIdAndProductId(Integer userId, Integer productId) {
+        return delete(
+                PRODUCT_WISHLIST.USER_ID.eq(userId)
+                        .and(PRODUCT_WISHLIST.PRODUCT_ID.eq(productId))
+        );
+    }
+
+    public void insertWishlist(Integer userId, Integer productId) {
+        dslContext.insertInto(PRODUCT_WISHLIST)
+                .set(PRODUCT_WISHLIST.USER_ID, userId)
+                .set(PRODUCT_WISHLIST.PRODUCT_ID, productId)
                 .execute();
     }
+
 }

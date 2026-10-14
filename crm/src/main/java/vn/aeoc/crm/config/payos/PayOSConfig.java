@@ -21,4 +21,13 @@ public class PayOSConfig {
     @Value("${payos.api-url:https://api-merchant.payos.vn/v2/payment-requests}")
     public String apiUrl;
 
+//    @Value("${payos.return-url}")
+//    private String returnUrl;
+//
+//    @Value("${payos.cancel-url}")
+//    private String cancelUrl;
+//
+//    @Value("${payos.description}")
+//    private String description;
+
 }

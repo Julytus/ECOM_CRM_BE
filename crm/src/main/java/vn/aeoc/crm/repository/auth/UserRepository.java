@@ -298,6 +298,7 @@ public class UserRepository extends AbsMysqlRepository<UserRecord, User, Integer
 
         lstFields.addAll(
                 asList(
+                        ROLE.IS_OPERATOR.as("is_operator"),
                         ROLE.NAME.as("role_name"),
                         BRANCH.NAME.as("branch_name"))
         );
@@ -319,6 +320,7 @@ public class UserRepository extends AbsMysqlRepository<UserRecord, User, Integer
 
         lstFields.addAll(
                 asList(
+                        ROLE.IS_OPERATOR.as("is_operator"),
                         ROLE.NAME.as("role_name"),
                         BRANCH.NAME.as("branch_name"))
         );

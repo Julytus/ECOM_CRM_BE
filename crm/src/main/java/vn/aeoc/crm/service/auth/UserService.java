@@ -36,12 +36,12 @@ public class UserService {
     private final UserRepository userRepository;
     private final PermissionService permissionService;
     private final JWTService jwtService;
-    private final RoleRepository roleRepository;
     private final JavaMailSender mailSender;
     private final RestService restService;
     private final RoleService roleService;
 
     public User getUserById(Integer userId) {
+        if (userId == 0) throw new AppException(ErrorCode.LOGIN);
         return userRepository.getUserById(userId);
     }
 

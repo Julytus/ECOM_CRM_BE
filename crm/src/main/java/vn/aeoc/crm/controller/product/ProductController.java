@@ -8,6 +8,8 @@ import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.config.model.ApiResponse;
 import vn.aeoc.base.util.CommonUtils;
 import vn.aeoc.crm.controller.BaseController;
+import vn.aeoc.crm.data.request.ProductListRequest;
+import vn.aeoc.crm.data.response.ProductDetailResponse;
 import vn.aeoc.crm.service.product.ProductService;
 import vn.aeoc.crm.util.BranchFilter;
 import vn.aeoc.crm.util.Mapper;
@@ -40,12 +42,29 @@ public class ProductController extends BaseController {
         return Mapper.map(result, ApiResponse::okEntity);
     }
 
+    @GetMapping("/product/list-detail")
+    public ResponseEntity<ApiResponse<Page<ProductDetailResponse>>> getDetailByCriteria(
+            @ModelAttribute ProductListRequest request, Pageable pageable) {
+
+        Page<ProductDetailResponse> result = productService.getProductDetailList(request, pageable);
+
+        return ResponseEntity.ok(ApiResponse.ok(result));
+    }
+
+    @GetMapping("/product/detail/{id}")
+    public ResponseEntity<ApiResponse<ProductDetailResponse>> getDetail(
+            @PathVariable(name = "id") Integer id) {
+
+        var result = productService.getDetailById(id);
+        return ResponseEntity.ok(ApiResponse.ok(result));
+    }
+
     @GetMapping("/product/get")
     public ResponseEntity<ApiResponse<Product>> get(
             @RequestParam Integer id,
             Principal principal
     ) {
-        checkPermission(principal, URI, "VIEW");
+//        checkPermission(principal, URI, "VIEW");
         var result = productService.getById(id);
         return Mapper.map(result, ApiResponse::okEntity);
     }
