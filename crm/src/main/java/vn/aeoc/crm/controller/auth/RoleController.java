@@ -1,6 +1,5 @@
 package vn.aeoc.crm.controller.auth;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.aeoc.base.config.extention.paging.Page;
@@ -8,6 +7,7 @@ import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.config.model.ApiResponse;
 import vn.aeoc.base.util.CommonUtils;
 import vn.aeoc.crm.controller.BaseController;
+import vn.aeoc.crm.service.auth.UserService;
 import vn.aeoc.crm.service.auth.RoleService;
 import vn.aeoc.crm.util.Mapper;
 import vn.aeoc.entity.data.mysql.auth.Role;
@@ -15,10 +15,14 @@ import vn.aeoc.entity.data.mysql.auth.Role;
 import java.security.Principal;
 
 @RestController
-@RequiredArgsConstructor
 public class RoleController extends BaseController {
     private static final String URI = "/role/";
     private final RoleService roleService;
+
+    public RoleController(RoleService roleService, UserService userService) {
+        super(userService);
+        this.roleService = roleService;
+    }
 
     @GetMapping("/role/list")
     public ResponseEntity<ApiResponse<Page<Role>>> getAllRoles(

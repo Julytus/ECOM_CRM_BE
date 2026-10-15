@@ -1,6 +1,5 @@
 package vn.aeoc.crm.controller.auth;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.aeoc.base.config.extention.paging.Pageable;
@@ -20,12 +19,15 @@ import java.security.Principal;
 import java.util.List;
 
 @RestController
-@RequiredArgsConstructor
 public class PermissionController extends BaseController {
     private static final String URI = "/permission/";
 
     private final PermissionService permissionService;
-    private final UserService userService;
+
+    public PermissionController(PermissionService permissionService, UserService userService) {
+        super(userService);
+        this.permissionService = permissionService;
+    }
 
     /**
      * Danh sách permission theo roleId (hoặc objectId)

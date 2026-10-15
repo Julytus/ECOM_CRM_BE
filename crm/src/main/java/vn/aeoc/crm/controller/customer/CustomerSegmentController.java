@@ -1,6 +1,5 @@
 package vn.aeoc.crm.controller.customer;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,6 +9,7 @@ import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.config.model.ApiResponse;
 import vn.aeoc.crm.controller.BaseController;
+import vn.aeoc.crm.service.auth.UserService;
 import vn.aeoc.crm.data.segment.CustomerSegmentSnapshotRow;
 import vn.aeoc.crm.data.segment.SegmentRecomputeProgress;
 import vn.aeoc.crm.data.segment.SegmentSummaryItem;
@@ -23,12 +23,16 @@ import java.security.Principal;
 import java.util.List;
 
 @RestController
-@RequiredArgsConstructor
 public class CustomerSegmentController extends BaseController {
 
     private static final String URI = "/customer/";
 
     private final CustomerSegmentService service;
+
+    public CustomerSegmentController(CustomerSegmentService service, UserService userService) {
+        super(userService);
+        this.service = service;
+    }
 
     /*
      * List customer segment snapshot with optional segment filter.

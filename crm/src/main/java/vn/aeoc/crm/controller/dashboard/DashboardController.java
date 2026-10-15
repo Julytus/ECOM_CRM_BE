@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.aeoc.base.config.model.ApiResponse;
 import vn.aeoc.crm.controller.BaseController;
+import vn.aeoc.crm.service.auth.UserService;
 import vn.aeoc.crm.data.report.*;
 import vn.aeoc.crm.service.dashboard.DashboardService;
 import vn.aeoc.crm.util.Mapper;
@@ -18,7 +19,8 @@ public class DashboardController extends BaseController {
     private static final String URI = "/dashboard/";
     private final DashboardService service;
 
-    public DashboardController(DashboardService service) {
+    public DashboardController(DashboardService service, UserService userService) {
+        super(userService);
         this.service = service;
     }
 

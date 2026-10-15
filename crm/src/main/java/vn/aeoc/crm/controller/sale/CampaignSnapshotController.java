@@ -1,12 +1,12 @@
 package vn.aeoc.crm.controller.sale;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.config.model.ApiResponse;
 import vn.aeoc.crm.controller.BaseController;
+import vn.aeoc.crm.service.auth.UserService;
 import vn.aeoc.crm.service.sale.CampaignSnapshotService;
 import vn.aeoc.crm.service.other.RagService;
 import vn.aeoc.crm.util.Mapper;
@@ -14,11 +14,16 @@ import vn.aeoc.entity.data.mysql.customer.CampaignSnapshot;
 
 import java.security.Principal;
 
-@RequiredArgsConstructor
 @RestController
 public class CampaignSnapshotController extends BaseController {
     private final CampaignSnapshotService service;
     private final RagService ragService;
+
+    public CampaignSnapshotController(CampaignSnapshotService service, RagService ragService, UserService userService) {
+        super(userService);
+        this.service = service;
+        this.ragService = ragService;
+    }
 
     private static final String URI = "/campaignSnapshot/";
 
