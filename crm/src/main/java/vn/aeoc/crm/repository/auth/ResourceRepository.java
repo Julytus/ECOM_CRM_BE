@@ -100,7 +100,8 @@ public class ResourceRepository extends AbsMysqlRepository<ResourceRecord, Resou
                         DSL.value(resource.getDescription()),
                         DSL.value(resource.getCode()),
                         DSL.value(resource.getUri()),
-                        DSL.value(CommonUtils.getJSON(resource.getActions()))
+                        DSL.value(CommonUtils.getJSON(resource.getActions())),
+                        DSL.value(CommonUtils.NVL(resource.getActive()) > 0 ? resource.getActive() : 1)
                 )
                 .execute();
         resource.setId(dslContext.lastID().intValue());
@@ -113,7 +114,6 @@ public class ResourceRepository extends AbsMysqlRepository<ResourceRecord, Resou
                 .set(RESOURCE.DESCRIPTION, resource.getDescription())
                 .set(RESOURCE.CODE, resource.getCode())
                 .set(RESOURCE.URI, resource.getUri())
-                .set(RESOURCE.ACTIONS, CommonUtils.getJSON(resource.getActions()))
                 .set(RESOURCE.ACTIONS, CommonUtils.getJSON(resource.getActions()))
                 .where(RESOURCE.ID.eq(resource.getId()))
                 .execute();

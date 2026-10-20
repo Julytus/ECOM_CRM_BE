@@ -14,6 +14,8 @@ public class Resource {
     private String uri;
     private String actions;
 
+    private Integer active;
+
     public Resource() {
 
     }
@@ -25,5 +27,6 @@ public class Resource {
         this.code = p.code;
         this.uri = p.uri;
         this.actions = p.actions;
+        this.active = p.active;
     }
 }
