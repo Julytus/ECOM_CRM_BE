@@ -84,6 +84,7 @@ app:
   checkout:
     shipping-fee: 30000
     default-branch-id: 0
+    payos-expire-minutes: 30
   cache:
     template:
       l1-max-size: 50000

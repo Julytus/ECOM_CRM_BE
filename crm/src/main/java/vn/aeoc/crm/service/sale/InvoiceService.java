@@ -244,7 +244,10 @@ public class InvoiceService extends BaseService<InvoiceRepository, Invoice, Inte
         if (invoice.getOrderId() != null) {
             Order order = orderRepository.getById(invoice.getOrderId());
             if (order != null) {
-                orderRepository.updateStatusAndPayment(invoice.getOrderId(), order.getStatus(), PaymentStatus.PAID);
+                String orderStatus = OrderStatus.NEW.equals(order.getStatus())
+                        && "PAYOS".equalsIgnoreCase(invoice.getPaymentMethod())
+                        ? OrderStatus.CONFIRMED : order.getStatus();
+                orderRepository.updateStatusAndPayment(invoice.getOrderId(), orderStatus, PaymentStatus.PAID);
             }
         }
         paymentRepository.markStatusByInvoice(invoiceId, "COMPLETED");

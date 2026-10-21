@@ -33,6 +33,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/user/authenticate"
     );
 
+    private static final List<String> WHITE_LIST_POST_API = List.of("/payment/webhook");
+
     /** Các API public nhưng chỉ cho method GET. */
     private static final List<String> WHITE_LIST_GET_API = List.of(
             "/product/list-detail",
@@ -122,6 +124,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = requestUri.substring(contextPath.length());
 
         return WHITE_LIST_API.contains(path)
+                || ("POST".equalsIgnoreCase(request.getMethod()) && WHITE_LIST_POST_API.contains(path))
                 || ("GET".equalsIgnoreCase(request.getMethod()) && WHITE_LIST_GET_API.contains(path))
                 || path.equals("/swagger-ui.html")
                 || path.equals("/swagger-ui/index.html")

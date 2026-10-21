@@ -116,4 +116,29 @@ public class OrderController extends BaseController {
         orderService.updateStatus(o.getId(), o);
         return ResponseEntity.ok(ApiResponse.ok("Cập nhật trạng thái đơn đặt hàng thành công"));
     }
+
+    @GetMapping("/order/my")
+    public ResponseEntity<ApiResponse<Page<OrderResponse>>> myOrders(
+            @RequestParam(required = false) String orderStatus, Pageable pageable, Principal principal) {
+        return ResponseEntity.ok(ApiResponse.ok(orderService.getMyOrders(SecurityUtils.userId(principal), orderStatus, pageable)));
+    }
+
+    @GetMapping("/order/my/{id}")
+    public ResponseEntity<ApiResponse<OrderResponse>> myOrder(@PathVariable Integer id, Principal principal) {
+        return ResponseEntity.ok(ApiResponse.ok(orderService.getMyOrder(SecurityUtils.userId(principal), id)));
+    }
+
+    @PostMapping("/order/my/{id}/cancel")
+    public ResponseEntity<ApiResponse<String>> cancelMyOrder(@PathVariable Integer id, Principal principal) {
+        orderService.cancelMyOrder(SecurityUtils.userId(principal), id);
+        return ResponseEntity.ok(ApiResponse.ok("Hủy đơn hàng thành công"));
+    }
+
+    @PostMapping("/order/{id}/advance")
+    public ResponseEntity<ApiResponse<String>> advance(@PathVariable Integer id, @RequestParam String to,
+                                                       Principal principal) {
+        checkPermission(principal, URI, "UPDATE");
+        orderService.advance(id, to);
+        return ResponseEntity.ok(ApiResponse.ok("Cập nhật trạng thái đơn đặt hàng thành công"));
+    }
 }
