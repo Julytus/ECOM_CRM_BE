@@ -5,8 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import vn.aeoc.crm.config.checkout.CheckoutConfig;
-import vn.aeoc.crm.repository.sale.InvoiceRepository;
-import vn.aeoc.entity.data.mysql.sale.Invoice;
+import vn.aeoc.crm.repository.sale.PaymentRepository;
+import vn.aeoc.entity.data.mysql.sale.Payment;
 
 import java.time.LocalDateTime;
 
@@ -14,18 +14,20 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentExpiryJob {
-    private final InvoiceRepository invoiceRepository;
-    private final InvoiceService invoiceService;
+    private final PaymentRepository paymentRepository;
+    private final PaymentService paymentService;
     private final CheckoutConfig checkoutConfig;
 
     @Scheduled(fixedDelay = 300000)
     public void expireUnpaidPayosInvoices() {
         LocalDateTime cutoff = LocalDateTime.now().minusMinutes(Math.max(1, checkoutConfig.payosExpireMinutes));
-        for (Invoice invoice : invoiceRepository.findExpiredPayosUnpaid(cutoff)) {
+        for (Payment payment : paymentRepository.findExpiredPendingPayos(cutoff)) {
+            if (payment.getCreatedTime() == null || !payment.getCreatedTime().isBefore(cutoff)) continue;
             try {
-                invoiceService.cancelOrderInvoice(invoice.getId());
+                paymentService.syncFromPayosForExpiry(payment);
             } catch (Exception ex) {
-                log.error("Failed to expire PayOS invoice {}", invoice.getId(), ex);
+                log.warn("PayOS expiry sync failed; leaving invoice {} unchanged (payment {}, orderCode {})",
+                        payment.getInvoiceId(), payment.getId(), payment.getOrderCode(), ex);
             }
         }
     }

@@ -7,6 +7,8 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
+import vn.aeoc.base.constant.ErrorCode;
+import vn.aeoc.base.exception.AppException;
 import vn.aeoc.crm.config.payos.PayOSConfig;
 import vn.aeoc.crm.config.socket.ChatSocketHandler;
 import vn.aeoc.crm.repository.sale.InvoiceRepository;
@@ -81,6 +83,52 @@ class PaymentServiceTest {
     }
 
     @Test
+    void lateWebhookForCancelledInvoiceIsIgnored() throws Exception {
+        Payment payment = new Payment();
+        payment.setInvoiceId(9);
+        payment.setOrderCode(12345L);
+        when(paymentRepository.findByPayosOrderCode(12345L)).thenReturn(payment);
+        Invoice invoice = new Invoice();
+        invoice.setId(9);
+        invoice.setStatus(vn.aeoc.crm.constant.InvoiceConstant.STATUS_CANCEL);
+        when(invoiceRepository.getById(9)).thenReturn(invoice);
+        when(invoiceService.markPaid(9, "PAYOS")).thenThrow(new AppException(ErrorCode.BAD_REQUEST));
+
+        assertEquals("IGNORED", service.handleWebhook(signedWebhook()));
+
+        verify(invoiceService).markPaid(9, "PAYOS");
+        verify(socketHandler, never()).emitPaymentDone(anyInt(), anyInt());
+    }
+
+    @Test
+    void lateWebhookForRefundedInvoiceIsIgnored() throws Exception {
+        Payment payment = new Payment();
+        payment.setInvoiceId(9);
+        payment.setOrderCode(12345L);
+        when(paymentRepository.findByPayosOrderCode(12345L)).thenReturn(payment);
+        Invoice invoice = new Invoice();
+        invoice.setId(9);
+        invoice.setStatus(vn.aeoc.crm.constant.InvoiceConstant.STATUS_REFUNDED);
+        when(invoiceRepository.getById(9)).thenReturn(invoice);
+        when(invoiceService.markPaid(9, "PAYOS")).thenThrow(new AppException(ErrorCode.BAD_REQUEST));
+
+        assertEquals("IGNORED", service.handleWebhook(signedWebhook()));
+
+        verify(invoiceService).markPaid(9, "PAYOS");
+        verify(socketHandler, never()).emitPaymentDone(anyInt(), anyInt());
+    }
+
+    @Test
+    void webhookRethrowsSystemFailureSoPayosCanRetry() throws Exception {
+        Payment payment = new Payment();
+        payment.setInvoiceId(9);
+        when(paymentRepository.findByPayosOrderCode(12345L)).thenReturn(payment);
+        when(invoiceService.markPaid(9, "PAYOS")).thenThrow(new IllegalStateException("database unavailable"));
+
+        assertThrows(IllegalStateException.class, () -> service.handleWebhook(signedWebhook()));
+    }
+
+    @Test
     void emptyChecksumKeyFailsClosed() {
         PayOSConfig config = new PayOSConfig();
         config.checksumKey = " ";
@@ -96,6 +144,7 @@ class PaymentServiceTest {
     void syncFromPayosSettlesPaidOrderForItsOwner() {
         Payment payment = new Payment();
         payment.setInvoiceId(9);
+        payment.setOrderCode(12345L);
         when(paymentRepository.findByPayosOrderCode(12345L)).thenReturn(payment);
         Invoice invoice = new Invoice();
         invoice.setId(9);
@@ -142,5 +191,11 @@ class PaymentServiceTest {
         StringBuilder result = new StringBuilder();
         for (byte b : bytes) result.append(String.format("%02x", b));
         return result.toString();
+    }
+
+    private String signedWebhook() throws Exception {
+        String signature = hmac("amount=1200&orderCode=12345");
+        return "{\"code\":\"00\",\"success\":true,\"data\":{\"orderCode\":12345,\"amount\":1200},"
+                + "\"signature\":\"" + signature + "\"}";
     }
 }

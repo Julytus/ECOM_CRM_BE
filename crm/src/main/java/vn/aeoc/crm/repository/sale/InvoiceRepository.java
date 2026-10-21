@@ -344,14 +344,6 @@ public class InvoiceRepository extends AbsMysqlRepository<InvoiceRecord, Invoice
                 .fetchOptionalInto(Invoice.class).orElse(null);
     }
 
-    public List<Invoice> findExpiredPayosUnpaid(LocalDateTime expiredBefore) {
-        return dslContext.selectFrom(INVOICE)
-                .where(INVOICE.STATUS.eq(InvoiceConstant.STATUS_UNPAID)
-                        .and(INVOICE.PAYMENT_METHOD.eq("PAYOS"))
-                        .and(INVOICE.CREATED_TIME.lt(expiredBefore)))
-                .fetchInto(Invoice.class);
-    }
-
     //Xóa mềm
     public Integer deleteInvoice(Integer id) {
         return updateField(id, INVOICE.STATUS, InvoiceConstant.STATUS_CANCEL);

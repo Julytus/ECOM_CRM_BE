@@ -23,6 +23,8 @@ import vn.aeoc.crm.repository.sale.PaymentRepository;
 import vn.aeoc.crm.repository.sale.OrderRepository;
 import vn.aeoc.crm.constant.InvoiceConstant;
 import vn.aeoc.crm.data.response.PaymentStatusResponse;
+import vn.aeoc.base.exception.AppException;
+import vn.aeoc.base.constant.ErrorCode;
 import vn.aeoc.entity.data.mysql.sale.Invoice;
 import vn.aeoc.entity.data.mysql.sale.Payment;
 
@@ -175,7 +177,6 @@ public class PaymentService {
         }
     }
 
-    @Transactional
     public String handleWebhook(String requestBody) {
         final JsonNode root;
         try {
@@ -201,7 +202,19 @@ public class PaymentService {
             log.warn("Payment not found for orderCode: {}", orderCode);
             return "IGNORED";
         }
-        int updated = invoiceService.markPaid(payment.getInvoiceId(), "PAYOS");
+        int updated;
+        try {
+            updated = invoiceService.markPaid(payment.getInvoiceId(), "PAYOS");
+        } catch (AppException ex) {
+            Invoice invoice = invoiceRepository.getById(payment.getInvoiceId());
+            if (invoice != null && (invoice.getStatus() == InvoiceConstant.STATUS_CANCEL
+                    || invoice.getStatus() == InvoiceConstant.STATUS_REFUNDED)) {
+                log.error("Ignoring late PayOS payment for cancelled/refunded invoiceId={}, orderCode={}, status={}",
+                        payment.getInvoiceId(), orderCode, invoice.getStatus(), ex);
+                return "IGNORED";
+            }
+            throw ex;
+        }
         Invoice invoice = invoiceRepository.getById(payment.getInvoiceId());
         if (updated > 0 && invoice != null && invoice.getUserId() != null) {
             socketHandler.emitPaymentDone(invoice.getUserId(), payment.getInvoiceId());
@@ -216,32 +229,14 @@ public class PaymentService {
         try { code = Long.parseLong(orderCode); }
         catch (NumberFormatException ex) { throw new IllegalArgumentException("Mã đơn hàng không hợp lệ", ex); }
         Payment payment = paymentRepository.findByPayosOrderCode(code);
-        if (payment == null) throw new vn.aeoc.base.exception.AppException(vn.aeoc.base.constant.ErrorCode.DATA_NOT_FOUND);
+        if (payment == null) throw new AppException(ErrorCode.DATA_NOT_FOUND);
         Invoice invoice = invoiceRepository.getById(payment.getInvoiceId());
-        if (invoice == null) throw new vn.aeoc.base.exception.AppException(vn.aeoc.base.constant.ErrorCode.DATA_NOT_FOUND);
+        if (invoice == null) throw new AppException(ErrorCode.DATA_NOT_FOUND);
         if (userId != null && userId > 0 && !userId.equals(invoice.getUserId())) {
-            throw new vn.aeoc.base.exception.AppException(vn.aeoc.base.constant.ErrorCode.DATA_NOT_FOUND);
+            throw new AppException(ErrorCode.DATA_NOT_FOUND);
         }
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("x-client-id", payOSConfig.clientId);
-        headers.set("x-api-key", payOSConfig.apiKey);
-        ResponseEntity<String> response = restTemplate.exchange(payOSConfig.apiUrl + "/" + code,
-                org.springframework.http.HttpMethod.GET, new HttpEntity<>(headers), String.class);
-        try {
-            JsonNode root = objectMapper.readTree(response.getBody());
-            if (!"00".equals(root.path("code").asText()))
-                throw new IllegalStateException("PayOS API error: " + root.path("desc").asText());
-            String status = root.path("data").path("status").asText("").toUpperCase(Locale.ROOT);
-            if ("PAID".equals(status)) invoiceService.markPaid(invoice.getId(), "PAYOS");
-            else if ("CANCELLED".equals(status) || "EXPIRED".equals(status)) {
-                if (invoice.getStatus() == InvoiceConstant.STATUS_UNPAID) invoiceService.cancelOrderInvoice(invoice.getId());
-            } else if (status.isBlank()) {
-                throw new IllegalStateException("PayOS response is missing data.status");
-            }
-        } catch (IOException ex) {
-            throw new IllegalStateException("Failed to parse PayOS response", ex);
-        }
+        syncPaymentFromPayos(payment, invoice);
         Invoice refreshed = invoiceRepository.getById(invoice.getId());
         vn.aeoc.entity.data.mysql.sale.Order order = orderRepository == null || invoice.getOrderId() == null
                 ? null : orderRepository.getById(invoice.getOrderId());
@@ -251,13 +246,47 @@ public class PaymentService {
                 refreshed == null ? invoice.getReceiptDate() : refreshed.getReceiptDate());
     }
 
+    void syncFromPayosForExpiry(Payment payment) {
+        Invoice invoice = invoiceRepository.getById(payment.getInvoiceId());
+        if (invoice == null) throw new AppException(ErrorCode.DATA_NOT_FOUND);
+        syncPaymentFromPayos(payment, invoice);
+    }
+
+    private String syncPaymentFromPayos(Payment payment, Invoice invoice) {
+        if (payment.getOrderCode() == null) throw new IllegalStateException("Pending PayOS payment has no orderCode");
+        long code = payment.getOrderCode();
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("x-client-id", payOSConfig.clientId);
+        headers.set("x-api-key", payOSConfig.apiKey);
+        ResponseEntity<String> response = restTemplate.exchange(payOSConfig.apiUrl + "/" + code,
+                org.springframework.http.HttpMethod.GET, new HttpEntity<>(headers), String.class);
+        String status;
+        try {
+            JsonNode root = objectMapper.readTree(response.getBody());
+            if (!"00".equals(root.path("code").asText()))
+                throw new IllegalStateException("PayOS API error: " + root.path("desc").asText());
+            status = root.path("data").path("status").asText("").toUpperCase(Locale.ROOT);
+            if ("PAID".equals(status)) invoiceService.markPaid(invoice.getId(), "PAYOS");
+            else if ("CANCELLED".equals(status) || "EXPIRED".equals(status)) {
+                if (invoice.getStatus() == InvoiceConstant.STATUS_UNPAID) invoiceService.cancelOrderInvoice(invoice.getId());
+            } else if ("PENDING".equals(status)) {
+                log.info("PayOS payment is still pending; invoice {} remains unchanged", invoice.getId());
+            } else {
+                throw new IllegalStateException("PayOS returned an unsupported payment status: " + status);
+            }
+        } catch (IOException ex) {
+            throw new IllegalStateException("Failed to parse PayOS response", ex);
+        }
+        return status;
+    }
+
     @Transactional
     public PayosLink retryPayment(Integer invoiceId, Integer userId) {
         Invoice invoice = invoiceRepository.getById(invoiceId);
         if (invoice == null || (userId != null && userId > 0 && !userId.equals(invoice.getUserId())))
-            throw new vn.aeoc.base.exception.AppException(vn.aeoc.base.constant.ErrorCode.DATA_NOT_FOUND);
+            throw new AppException(ErrorCode.DATA_NOT_FOUND);
         if (invoice.getStatus() != InvoiceConstant.STATUS_UNPAID || !"PAYOS".equalsIgnoreCase(invoice.getPaymentMethod()))
-            throw new vn.aeoc.base.exception.AppException("Chỉ có thể tạo lại thanh toán PayOS chưa thanh toán", 400);
+            throw new AppException("Chỉ có thể tạo lại thanh toán PayOS chưa thanh toán", 400);
         if (invoice.getOrderId() == null) throw new IllegalStateException("PayOS checkout invoice has no order_id");
         paymentRepository.cancelPendingByInvoice(invoiceId);
         long code = generateUniqueOrderCode();

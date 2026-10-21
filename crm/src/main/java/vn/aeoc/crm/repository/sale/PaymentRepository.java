@@ -1,12 +1,15 @@
 package vn.aeoc.crm.repository.sale;
 
 import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 import org.springframework.stereotype.Repository;
 import vn.aeoc.entity.data.mysql.sale.Payment;
 
 import java.util.List;
+import java.time.LocalDateTime;
 
 import static vn.entity.backend.tables.Payment.PAYMENT;
+import static vn.entity.backend.tables.Invoice.INVOICE;
 
 @Repository
 public class PaymentRepository {
@@ -37,6 +40,25 @@ public class PaymentRepository {
                 .where(PAYMENT.ORDER_CODE.eq(orderCode))
                 .fetchOptionalInto(Payment.class)
                 .orElse(null);
+    }
+
+    public List<Payment> findExpiredPendingPayos(LocalDateTime expiredBefore) {
+        var latestPending = PAYMENT.as("latest_pending");
+        var latestPendingId = dsl.select(latestPending.ID)
+                .from(latestPending)
+                .where(latestPending.INVOICE_ID.eq(PAYMENT.INVOICE_ID)
+                        .and(latestPending.STATUS.eq("PENDING")))
+                .orderBy(latestPending.CREATED_TIME.desc(), latestPending.ID.desc())
+                .limit(1);
+        return dsl.select(PAYMENT.fields())
+                .from(PAYMENT.join(INVOICE).on(INVOICE.ID.eq(PAYMENT.INVOICE_ID)))
+                .where(INVOICE.STATUS.eq(vn.aeoc.crm.constant.InvoiceConstant.STATUS_UNPAID)
+                        .and(INVOICE.PAYMENT_METHOD.eq("PAYOS"))
+                        .and(PAYMENT.STATUS.eq("PENDING"))
+                        .and(PAYMENT.CREATED_TIME.lt(expiredBefore))
+                        .and(PAYMENT.ID.eq(latestPendingId)))
+                .orderBy(PAYMENT.CREATED_TIME.asc(), PAYMENT.ID.asc())
+                .fetchInto(Payment.class);
     }
 
     public Payment insert(Payment payment) {
