@@ -36,4 +36,8 @@ public class Invoice {
     // JOIN thêm
     private String customerName;
     private String userName;
+    private String orderCode;
+    private String buyerName;
+    private String buyerPhone;
+    private String orderStatus;
 }

@@ -21,14 +21,18 @@ import vn.aeoc.crm.repository.sale.CustomerVoucherUsageRepository;
 import vn.aeoc.crm.repository.sale.InvoiceRepository;
 import vn.aeoc.crm.repository.sale.InvoiceVoucherRepository;
 import vn.aeoc.crm.repository.sale.OrderRepository;
+import vn.aeoc.crm.repository.sale.OrderItemRepository;
 import vn.aeoc.crm.repository.sale.PaymentRepository;
 import vn.aeoc.crm.service.cache.CacheKeyFactory;
 import vn.aeoc.crm.service.cache.ThreeLayerCacheTemplate;
 import vn.aeoc.entity.data.mysql.sale.Invoice;
 import vn.aeoc.entity.data.mysql.sale.Order;
+import vn.aeoc.entity.data.mysql.sale.OrderItem;
+import vn.aeoc.entity.data.mysql.sale.Payment;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +41,8 @@ import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.Locale;
+import java.util.Set;
 
 import static vn.entity.backend.tables.Invoice.INVOICE;
 
@@ -52,6 +58,7 @@ public class InvoiceService extends BaseService<InvoiceRepository, Invoice, Inte
     private final BoughtServiceItemService boughtServiceItemService;
     private final ThreeLayerCacheTemplate cacheTemplate;
     private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
     private final PaymentRepository paymentRepository;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -64,6 +71,7 @@ public class InvoiceService extends BaseService<InvoiceRepository, Invoice, Inte
                              BoughtServiceItemService boughtServiceItemService,
                              ThreeLayerCacheTemplate cacheTemplate,
                              OrderRepository orderRepository,
+                             OrderItemRepository orderItemRepository,
                              PaymentRepository paymentRepository,
                              ApplicationEventPublisher eventPublisher) {
         super(repository, queryExecutor);
@@ -74,15 +82,32 @@ public class InvoiceService extends BaseService<InvoiceRepository, Invoice, Inte
         this.boughtServiceItemService = boughtServiceItemService;
         this.cacheTemplate = cacheTemplate;
         this.orderRepository = orderRepository;
+        this.orderItemRepository = orderItemRepository;
         this.paymentRepository = paymentRepository;
         this.eventPublisher = eventPublisher;
     }
 
-    public Page<Invoice> getListByCriteria(String keyword, Integer customerId, List<Integer> status, Integer branchId, Pageable pageable) {
+    public Page<Invoice> getListByCriteria(String keyword, Integer customerId, List<Integer> status,
+                                           String paymentMethod, LocalDate fromDate, LocalDate toDate,
+                                           String orderCode, String sortBy, String sortDir,
+                                           Integer branchId, Pageable pageable) {
+        if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
+            throw new AppException(ErrorCode.BAD_REQUEST);
+        }
+        if (paymentMethod != null && !Set.of("COD", "PAYOS", "CASH", "TRANSFER")
+                .contains(paymentMethod.trim().toUpperCase(Locale.ROOT))) {
+            throw new AppException(ErrorCode.BAD_REQUEST);
+        }
+        if (sortDir != null && !Set.of("asc", "desc").contains(sortDir.toLowerCase(Locale.ROOT))) {
+            throw new AppException(ErrorCode.BAD_REQUEST);
+        }
+        var filter = new InvoiceRepository.InvoiceFilter(keyword, customerId, status,
+                paymentMethod, fromDate, toDate, orderCode,
+                sortBy, sortDir, branchId);
         return pageQuery(
                 pageable,
-                () -> repository.getInvoiceByCriteria(keyword, customerId, status, branchId, pageable),
-                () -> repository.countInvoiceByCriteria(keyword, customerId, status, branchId)
+                () -> repository.getInvoiceByCriteria(filter, pageable),
+                () -> repository.countInvoiceByCriteria(filter)
         );
     }
 
@@ -92,14 +117,33 @@ public class InvoiceService extends BaseService<InvoiceRepository, Invoice, Inte
         return cacheTemplate.getOrLoad(key, TTL_REVENUE_TODAY, () -> repository.getRevenueToday(branchId));
     }
 
-    public InvoiceResponse getDetailById(Integer id) {
+    public InvoiceResponse getDetailById(Integer id, int branchId) {
         var tuple3 = queryExecutor.parallel3(
-                () -> repository.getInvoiceById(id),
+                () -> repository.getInvoiceById(id, branchId),
                 () -> boughtProductService.getByInvoiceId(id),
                 () -> boughtServiceItemService.getByInvoiceId(id)
         );
 
-        return new InvoiceResponse(tuple3.v1(), tuple3.v2(), tuple3.v3());
+        Invoice invoice = tuple3.v1();
+        if (invoice == null) throw new AppException(ErrorCode.DATA_NOT_FOUND);
+
+        Order order = null;
+        List<OrderItem> orderItems = List.of();
+        List<Payment> payments = List.of();
+        InvoiceResponse.VoucherSummary voucher = null;
+        if (invoice.getOrderId() != null) {
+            order = orderRepository.getById(invoice.getOrderId());
+            orderItems = orderItemRepository.fetchOrderItemDetail(invoice.getOrderId());
+            payments = paymentRepository.findAllByInvoiceId(id);
+            String voucherCode = order == null ? invoice.getVoucherCode() : order.getVoucherCode();
+            if (voucherCode != null || invoice.getVoucherId() != null) {
+                voucher = new InvoiceResponse.VoucherSummary(voucherCode, invoice.getDiscount());
+            }
+        } else if (invoice.getVoucherCode() != null || invoice.getVoucherId() != null) {
+            voucher = new InvoiceResponse.VoucherSummary(invoice.getVoucherCode(), invoice.getDiscount());
+        }
+
+        return new InvoiceResponse(invoice, tuple3.v2(), tuple3.v3(), order, orderItems, payments, voucher);
     }
 
     public List<RevenueHourChart> getRevenueByHourToday(Integer branchId) {

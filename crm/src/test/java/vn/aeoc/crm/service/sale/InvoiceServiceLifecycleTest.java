@@ -12,6 +12,7 @@ import vn.aeoc.crm.repository.sale.CustomerVoucherUsageRepository;
 import vn.aeoc.crm.repository.sale.InvoiceRepository;
 import vn.aeoc.crm.repository.sale.InvoiceVoucherRepository;
 import vn.aeoc.crm.repository.sale.OrderRepository;
+import vn.aeoc.crm.repository.sale.OrderItemRepository;
 import vn.aeoc.crm.repository.sale.PaymentRepository;
 import vn.aeoc.crm.service.cache.ThreeLayerCacheTemplate;
 import vn.aeoc.entity.data.mysql.sale.Invoice;
@@ -41,7 +42,7 @@ class InvoiceServiceLifecycleTest {
         service = new InvoiceService(invoiceRepository, invoiceVoucherRepository, usageRepository,
                 new QueryExecutor(Runnable::run), mock(BoughtProductService.class),
                 mock(BoughtServiceItemService.class), mock(ThreeLayerCacheTemplate.class),
-                orderRepository, paymentRepository, eventPublisher);
+                orderRepository, mock(OrderItemRepository.class), paymentRepository, eventPublisher);
     }
 
     @Test

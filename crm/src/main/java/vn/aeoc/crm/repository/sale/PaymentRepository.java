@@ -4,6 +4,8 @@ import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 import vn.aeoc.entity.data.mysql.sale.Payment;
 
+import java.util.List;
+
 import static vn.entity.backend.tables.Payment.PAYMENT;
 
 @Repository
@@ -21,6 +23,13 @@ public class PaymentRepository {
                 .orderBy(PAYMENT.ID.desc())
                 .limit(1)
                 .fetchOneInto(Payment.class);
+    }
+
+    public List<Payment> findAllByInvoiceId(Integer invoiceId) {
+        return dsl.selectFrom(PAYMENT)
+                .where(PAYMENT.INVOICE_ID.eq(invoiceId))
+                .orderBy(PAYMENT.ID.asc())
+                .fetchInto(Payment.class);
     }
 
     public Payment findByPayosOrderCode(Long orderCode) {

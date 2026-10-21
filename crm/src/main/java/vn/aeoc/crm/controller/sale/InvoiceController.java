@@ -1,7 +1,9 @@
 package vn.aeoc.crm.controller.sale;
 
 import org.springframework.http.ResponseEntity;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.format.annotation.DateTimeFormat;
 import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.config.model.ApiResponse;
@@ -18,6 +20,7 @@ import vn.aeoc.entity.data.mysql.sale.Invoice;
 import vn.aeoc.entity.data.mysql.auth.User;
 
 import java.security.Principal;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -37,12 +40,19 @@ public class InvoiceController extends BaseController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer customerId,
             @RequestParam(required = false) List<Integer> status,
-            Pageable pageable,
+            @RequestParam(required = false) String paymentMethod,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(required = false) String orderCode,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortDir,
+            @ParameterObject Pageable pageable,
             Principal principal
     ) {
         User login = checkPermission(principal, URI, "VIEW");
         var result = service.getListByCriteria(
-                keyword, customerId, status, BranchFilter.listScopeBranchId(login), pageable);
+                keyword, customerId, status, paymentMethod, fromDate, toDate, orderCode,
+                sortBy, sortDir, BranchFilter.listScopeBranchId(login), pageable);
         return Mapper.map(result, ApiResponse::okEntity);
     }
 
@@ -61,8 +71,8 @@ public class InvoiceController extends BaseController {
             @RequestParam Integer id,
             Principal principal
     ) {
-        checkPermission(principal, URI, "VIEW");
-        var result = service.getDetailById(id);
+        User login = checkPermission(principal, URI, "VIEW");
+        var result = service.getDetailById(id, BranchFilter.listScopeBranchId(login));
         return Mapper.map(result, ApiResponse::okEntity);
     }
 

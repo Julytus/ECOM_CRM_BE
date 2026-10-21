@@ -8,6 +8,8 @@ import org.jooq.Table;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
 import org.springframework.stereotype.Repository;
+import vn.aeoc.base.constant.ErrorCode;
+import vn.aeoc.base.exception.AppException;
 import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.repo.AbsMysqlRepository;
 import vn.aeoc.base.util.CommonUtils;
@@ -18,6 +20,9 @@ import vn.aeoc.entity.data.mysql.sale.Invoice;
 import vn.entity.backend.tables.records.InvoiceRecord;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.util.Locale;
+import java.util.Set;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,10 +31,17 @@ import static vn.entity.backend.tables.BoughtProduct.BOUGHT_PRODUCT;
 import static vn.entity.backend.tables.BoughtService.BOUGHT_SERVICE;
 import static vn.entity.backend.tables.Customer.CUSTOMER;
 import static vn.entity.backend.tables.Invoice.INVOICE;
+import static vn.entity.backend.tables.Order.ORDER;
 import static vn.entity.backend.tables.User.USER;
 
 @Repository
 public class InvoiceRepository extends AbsMysqlRepository<InvoiceRecord, Invoice, Integer> {
+    public record InvoiceFilter(String keyword, Integer customerId, List<Integer> status,
+                                String paymentMethod, LocalDate fromDate, LocalDate toDate,
+                                String orderCode, String sortBy, String sortDir, Integer branchId) {}
+
+    private static final Set<String> SORT_FIELDS = Set.of("id", "createdTime", "fee");
+
     public InvoiceRepository(DSLContext dslContext) {
         super(dslContext);
     }
@@ -39,28 +51,53 @@ public class InvoiceRepository extends AbsMysqlRepository<InvoiceRecord, Invoice
         return INVOICE;
     }
 
-    private Condition getWhereCondition(String keyword, Integer customerId, List<Integer> status, Integer branchId) {
+    Condition getWhereCondition(InvoiceFilter filter) {
         Condition condition = DSL.trueCondition();
 
-        if (CommonUtils.NVL(branchId) > 0) {
-            condition = condition.and(INVOICE.BRANCH_ID.eq(branchId));
+        if (CommonUtils.NVL(filter.branchId()) > 0) {
+            condition = condition.and(INVOICE.BRANCH_ID.eq(filter.branchId()));
         }
 
-        if (!StringUtils.isBlank(keyword)) {
-            String kw = "%" + keyword.trim().toLowerCase() + "%";
+        var o = ORDER.as("o");
+        if (!StringUtils.isBlank(filter.keyword())) {
+            String kw = "%" + filter.keyword().trim().toLowerCase(Locale.ROOT) + "%";
 
             condition = condition.and(
                     DSL.lower(INVOICE.INVOICE_CODE).like(kw)
                             .or(DSL.lower(INVOICE.INVOICE_TYPE).like(kw))
+                            .or(DSL.lower(o.CODE).like(kw))
+                            .or(DSL.lower(o.BUYER_NAME).like(kw))
+                            .or(DSL.lower(o.BUYER_PHONE).like(kw))
             );
         }
 
-        if (CommonUtils.NVL(customerId) > 0) {
-            condition = condition.and(INVOICE.CUSTOMER_ID.eq(customerId));
+        if (CommonUtils.NVL(filter.customerId()) > 0) {
+            condition = condition.and(INVOICE.CUSTOMER_ID.eq(filter.customerId()));
         }
 
-        if (!status.isEmpty()) {
-            condition = condition.and(INVOICE.STATUS.in(status));
+        if (filter.status() != null && !filter.status().isEmpty()) {
+            condition = condition.and(INVOICE.STATUS.in(filter.status()));
+        }
+        if (StringUtils.isNotBlank(filter.paymentMethod())) {
+            Field<String> effectivePaymentMethod = DSL.coalesce(
+                    INVOICE.PAYMENT_METHOD,
+                    DSL.choose(INVOICE.PAYMENT_TYPE)
+                            .when(1, "CASH")
+                            .when(2, "TRANSFER")
+                            .otherwise((String) null)
+            );
+            condition = condition.and(effectivePaymentMethod.eq(
+                    filter.paymentMethod().trim().toUpperCase(Locale.ROOT)));
+        }
+        var effectiveTime = DSL.coalesce(INVOICE.RECEIPT_DATE, INVOICE.CREATED_TIME);
+        if (filter.fromDate() != null) {
+            condition = condition.and(effectiveTime.ge(filter.fromDate().atStartOfDay()));
+        }
+        if (filter.toDate() != null) {
+            condition = condition.and(effectiveTime.lt(filter.toDate().plusDays(1).atStartOfDay()));
+        }
+        if (StringUtils.isNotBlank(filter.orderCode())) {
+            condition = condition.and(DSL.lower(o.CODE).like("%" + filter.orderCode().trim().toLowerCase(Locale.ROOT) + "%"));
         }
 
         return condition;
@@ -101,10 +138,15 @@ public class InvoiceRepository extends AbsMysqlRepository<InvoiceRecord, Invoice
     public List<Field<?>> getJoinFields() {
         var u = USER.as("u");
         var c = CUSTOMER.as("c");
+        var o = ORDER.as("o");
 
         return mergeFields(
                 c.NAME.as("customerName"),
-                u.NAME.as("userName")
+                u.NAME.as("userName"),
+                o.CODE.as("orderCode"),
+                o.BUYER_NAME.as("buyerName"),
+                o.BUYER_PHONE.as("buyerPhone"),
+                o.STATUS.as("orderStatus")
         );
     }
 
@@ -113,20 +155,45 @@ public class InvoiceRepository extends AbsMysqlRepository<InvoiceRecord, Invoice
     private Table<?> getJoinTable() {
         var u = USER.as("u");
         var c = CUSTOMER.as("c");
+        var o = ORDER.as("o");
 
         return INVOICE
                 .leftJoin(c).on(c.ID.eq(INVOICE.CUSTOMER_ID))
-                .leftJoin(u).on(u.ID.eq(INVOICE.USER_ID));
+                .leftJoin(u).on(u.ID.eq(INVOICE.USER_ID))
+                .leftJoin(o).on(o.ID.eq(INVOICE.ORDER_ID));
     }
 
 
-    public List<Invoice> getInvoiceByCriteria(String keyword, Integer customerId, List<Integer> status, Integer branchId, Pageable pageable) {
-        if (StringUtils.isBlank(keyword)) {
-            return getInvoiceByCriteriaNoKeywordFast(customerId, status, branchId, pageable);
+    private org.jooq.SortField<?> sortField(InvoiceFilter filter) {
+        String sortBy = StringUtils.defaultIfBlank(filter.sortBy(), "id");
+        if (!SORT_FIELDS.contains(sortBy)) {
+            throw new AppException(ErrorCode.BAD_REQUEST);
         }
+        boolean ascending = "asc".equalsIgnoreCase(filter.sortDir());
+        return switch (sortBy) {
+            case "createdTime" -> ascending ? INVOICE.CREATED_TIME.asc() : INVOICE.CREATED_TIME.desc();
+            case "fee" -> ascending ? INVOICE.FEE.asc() : INVOICE.FEE.desc();
+            default -> ascending ? INVOICE.ID.asc() : INVOICE.ID.desc();
+        };
+    }
 
-        Condition condition = getWhereCondition(keyword, customerId, status, branchId);
-        return getListByCriteriaWithJoin(getJoinFields(), getJoinTable(), condition, INVOICE.ID.desc(), pageable);
+    public List<Invoice> getInvoiceByCriteria(InvoiceFilter filter, Pageable pageable) {
+        var sort = sortField(filter);
+        Condition condition = getWhereCondition(filter);
+        if (StringUtils.isBlank(filter.keyword()) && StringUtils.isBlank(filter.orderCode())) {
+            return getInvoiceByCriteriaNoKeywordFast(pageable, condition, sort, hasSortTieBreaker(filter));
+        }
+        var query = dslContext.select(getJoinFields())
+                .from(getJoinTable())
+                .where(condition);
+        if (hasSortTieBreaker(filter)) {
+            return query.orderBy(sort, INVOICE.ID.desc())
+                    .limit(pageable.getLimit()).offset(pageable.getOffset())
+                    .fetchInto(Invoice.class);
+        }
+        return query.orderBy(sort)
+                .limit(pageable.getLimit()).offset(pageable.getOffset())
+                .fetchInto(Invoice.class);
     }
 
     /*
@@ -134,41 +201,51 @@ public class InvoiceRepository extends AbsMysqlRepository<InvoiceRecord, Invoice
      * query id page first, then fetch joined rows by that id set.
      */
     private List<Invoice> getInvoiceByCriteriaNoKeywordFast(
-            Integer customerId,
-            List<Integer> status,
-            Integer branchId,
-            Pageable pageable
+            Pageable pageable, Condition condition,
+            org.jooq.SortField<?> sort, boolean tieBreaker
     ) {
-        Condition condition = getWhereCondition(null, customerId, status, branchId);
-
-        List<Integer> invoiceIds = dslContext
+        var idQuery = dslContext
                 .select(INVOICE.ID)
-                .from(INVOICE)
-                .where(condition)
-                .orderBy(INVOICE.ID.desc())
-                .limit(pageable.getLimit())
-                .offset(pageable.getOffset())
+                .from(INVOICE.leftJoin(ORDER.as("o")).on(ORDER.as("o").ID.eq(INVOICE.ORDER_ID)))
+                .where(condition);
+        List<Integer> invoiceIds = (tieBreaker
+                ? idQuery.orderBy(sort, INVOICE.ID.desc())
+                : idQuery.orderBy(sort))
+                .limit(pageable.getLimit()).offset(pageable.getOffset())
                 .fetchInto(Integer.class);
 
         if (invoiceIds.isEmpty()) {
             return List.of();
         }
 
-        return getListByCriteriaWithJoin(
-                getJoinFields(),
-                getJoinTable(),
-                INVOICE.ID.in(invoiceIds),
-                INVOICE.ID.desc()
-        );
+        var rowQuery = dslContext.select(getJoinFields())
+                .from(getJoinTable())
+                .where(INVOICE.ID.in(invoiceIds));
+        if (tieBreaker) {
+            return rowQuery.orderBy(sort, INVOICE.ID.desc()).fetchInto(Invoice.class);
+        }
+        return rowQuery.orderBy(sort).fetchInto(Invoice.class);
     }
 
-    public Long countInvoiceByCriteria(String keyword, Integer customerId, List<Integer> status, Integer branchId) {
-        Condition condition = getWhereCondition(keyword, customerId, status, branchId);
-        return getCountWithCriteria(condition);
+    private boolean hasSortTieBreaker(InvoiceFilter filter) {
+        return !"id".equals(StringUtils.defaultIfBlank(filter.sortBy(), "id"));
+    }
+
+    public Long countInvoiceByCriteria(InvoiceFilter filter) {
+        return dslContext.selectCount()
+                .from(INVOICE.leftJoin(ORDER.as("o")).on(ORDER.as("o").ID.eq(INVOICE.ORDER_ID)))
+                .where(getWhereCondition(filter))
+                .fetchOne(0, Long.class);
     }
 
     public Invoice getInvoiceById(Integer id) {
         return getOneByCriteriaWithJoin(getJoinFields(), getJoinTable(), INVOICE.ID.eq(id));
+    }
+
+    public Invoice getInvoiceById(Integer id, int branchId) {
+        Condition condition = INVOICE.ID.eq(id);
+        if (branchId > 0) condition = condition.and(INVOICE.BRANCH_ID.eq(branchId));
+        return getOneByCriteriaWithJoin(getJoinFields(), getJoinTable(), condition);
     }
 
     // Lấy hóa đơn nháp của khách hàng
