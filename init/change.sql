@@ -48,3 +48,16 @@ ALTER TABLE payment
     ADD KEY payment_invoice_id_index (invoice_id),
     ADD UNIQUE KEY payment_order_code_uindex (order_code);
 
+ALTER TABLE invoice
+    MODIFY created_time timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+    MODIFY updated_time timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+
+ALTER TABLE `order`
+    MODIFY updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+
+UPDATE invoice i
+JOIN `order` o ON o.id = i.order_id
+SET i.created_time = o.created_at,
+    i.updated_time = COALESCE(i.receipt_date, o.created_at)
+WHERE i.created_time IS NULL;
+

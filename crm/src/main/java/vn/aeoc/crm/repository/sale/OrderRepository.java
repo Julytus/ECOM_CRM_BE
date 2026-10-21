@@ -12,11 +12,13 @@ import vn.aeoc.base.util.CommonUtils;
 //import vn.aeoc.crm.data.constant.OrderStatus;
 import vn.aeoc.crm.data.constant.PaymentStatus;
 import vn.aeoc.entity.data.mysql.sale.Order;
+import vn.aeoc.crm.data.response.OrderResponse;
 import vn.entity.backend.tables.records.OrderRecord;
 
 import java.util.List;
 
 import static vn.entity.backend.tables.Order.ORDER;
+import static vn.entity.backend.tables.Invoice.INVOICE;
 
 @Repository
 public class OrderRepository
@@ -96,8 +98,27 @@ public class OrderRepository
         return dslContext.update(ORDER)
                 .set(ORDER.STATUS, status)
                 .set(ORDER.PAYMENT_STATUS, paymentStatus)
+                .set(ORDER.UPDATED_AT, java.time.LocalDateTime.now())
                 .where(ORDER.ID.eq(orderId))
                 .execute();
+    }
+
+    public List<OrderResponse> findByUserId(Integer userId, String orderStatus, Pageable pageable) {
+        Condition condition = ORDER.USER_ID.eq(userId);
+        if (!StringUtils.isBlank(orderStatus)) condition = condition.and(ORDER.STATUS.eq(orderStatus));
+        return dslContext.select(ORDER.fields())
+                .select(INVOICE.ID.as("invoiceId"), INVOICE.INVOICE_CODE.as("invoiceCode"),
+                        INVOICE.STATUS.as("invoiceStatus"))
+                .from(ORDER.leftJoin(INVOICE).on(INVOICE.ORDER_ID.eq(ORDER.ID)))
+                .where(condition).orderBy(ORDER.ID.desc())
+                .limit(pageable.getLimit()).offset(pageable.getOffset())
+                .fetchInto(OrderResponse.class);
+    }
+
+    public Long countByUserId(Integer userId, String orderStatus) {
+        Condition condition = ORDER.USER_ID.eq(userId);
+        if (!StringUtils.isBlank(orderStatus)) condition = condition.and(ORDER.STATUS.eq(orderStatus));
+        return dslContext.selectCount().from(ORDER).where(condition).fetchOne(0, Long.class);
     }
 
     public Order createNewOrder(Order o) {

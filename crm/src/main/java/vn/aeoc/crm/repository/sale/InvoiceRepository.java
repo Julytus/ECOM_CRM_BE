@@ -288,6 +288,9 @@ public class InvoiceRepository extends AbsMysqlRepository<InvoiceRecord, Invoice
     public Invoice insertFromOrder(Integer orderId, double subtotal, double discount, double shippingFee,
                                     String paymentMethod, Integer customerId, Integer branchId, Integer userId) {
         Invoice invoice = new Invoice();
+        LocalDateTime now = LocalDateTime.now();
+        invoice.setCreatedTime(now);
+        invoice.setUpdatedTime(now);
         invoice.setInvoiceCode(CommonUtils.nextCode("INV"));
         invoice.setInvoiceType(InvoiceConstant.SALE_INVOICE);
         invoice.setStatus(InvoiceConstant.STATUS_UNPAID);
@@ -314,6 +317,8 @@ public class InvoiceRepository extends AbsMysqlRepository<InvoiceRecord, Invoice
                 .set(INVOICE.ORDER_ID, invoice.getOrderId())
                 .set(INVOICE.SHIPPING_FEE, invoice.getShippingFee())
                 .set(INVOICE.PAYMENT_METHOD, invoice.getPaymentMethod())
+                .set(INVOICE.CREATED_TIME, invoice.getCreatedTime())
+                .set(INVOICE.UPDATED_TIME, invoice.getUpdatedTime())
                 .returning()
                 .fetchOneInto(Invoice.class);
     }
@@ -327,10 +332,16 @@ public class InvoiceRepository extends AbsMysqlRepository<InvoiceRecord, Invoice
         Map<Field<?>, Object> fields = new HashMap<>();
         if (extraFields != null) fields.putAll(extraFields);
         fields.put(INVOICE.STATUS, toStatus);
+        fields.put(INVOICE.UPDATED_TIME, LocalDateTime.now());
         return dslContext.update(INVOICE)
                 .set(fields)
                 .where(INVOICE.ID.eq(id).and(INVOICE.STATUS.eq(fromStatus)))
                 .execute();
+    }
+
+    public Invoice findByOrderId(Integer orderId) {
+        return dslContext.selectFrom(INVOICE).where(INVOICE.ORDER_ID.eq(orderId))
+                .fetchOptionalInto(Invoice.class).orElse(null);
     }
 
     //Xóa mềm

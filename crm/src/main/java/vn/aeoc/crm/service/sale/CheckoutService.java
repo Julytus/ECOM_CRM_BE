@@ -58,6 +58,7 @@ public class CheckoutService {
 
     public CheckoutPreviewResponse preview(CheckoutRequest request) {
         request.validate();
+        String paymentMethod = normalizePaymentMethod(request.getPaymentMethod());
         OrderItemService.CalculatedItems items = orderItemService.calculate(request.getItems());
         int branchId = branchId(request);
         double discount = request.getVoucherCode() == null || request.getVoucherCode().isBlank()
@@ -72,6 +73,7 @@ public class CheckoutService {
     @Transactional
     public CheckoutResponse submit(CheckoutRequest request, Integer userId) {
         request.validate();
+        String paymentMethod = normalizePaymentMethod(request.getPaymentMethod());
         OrderItemService.CalculatedItems items = orderItemService.calculate(request.getItems());
         int branchId = branchId(request);
         Voucher voucher = null;
@@ -96,7 +98,7 @@ public class CheckoutService {
         order.setReceiverName(request.getReceiverName());
         order.setReceiverPhone(request.getReceiverPhone());
         order.setNote(request.getNote());
-        order.setPaymentMethod(request.getPaymentMethod());
+        order.setPaymentMethod(paymentMethod);
         order.setTotalAmount(items.subtotal());
         order.setDiscountAmount(discount);
         order.setShippingFee(shippingFee);
@@ -115,7 +117,7 @@ public class CheckoutService {
 
         CompletableFuture<PaymentService.PayosLink> payosFuture = null;
         long orderCode = 0L;
-        if (PaymentMethod.PAYOS.equals(request.getPaymentMethod())) {
+        if (PaymentMethod.PAYOS.equals(paymentMethod)) {
             orderCode = paymentService.generateUniqueOrderCode();
             long payosOrderCode = orderCode;
             String cancelUrl = payOSConfig.baseUrl + "/payment/" + payosOrderCode + "/cancel";
@@ -125,7 +127,7 @@ public class CheckoutService {
         }
 
         Invoice invoice = invoiceRepository.insertFromOrder(insertedOrder.getId(), items.subtotal(), discount,
-                shippingFee, request.getPaymentMethod(), request.getCustomerId(), branchId, userId);
+                shippingFee, paymentMethod, request.getCustomerId(), branchId, userId);
         if (voucher != null) {
             invoiceVoucherRepository.insert(invoice.getId(), voucher.getId(), discount);
         }
@@ -137,7 +139,7 @@ public class CheckoutService {
         payment.setAmount(finalAmount);
         payment.setPaymentType("FULL");
         payment.setStatus("PENDING");
-        payment.setPaymentProvider(request.getPaymentMethod());
+        payment.setPaymentProvider(paymentMethod);
         if (payosLink != null) {
             payment.setOrderCode(payosLink.orderCode());
             payment.setPaymentLinkId(payosLink.paymentLinkId());
@@ -148,8 +150,15 @@ public class CheckoutService {
         if (insertedPayment == null) throw new AppException(ErrorCode.INPUT_WRONG);
 
         return new CheckoutResponse(insertedOrder.getId(), insertedOrder.getCode(), invoice.getId(),
-                invoice.getInvoiceCode(), request.getPaymentMethod(), "PENDING", finalAmount,
+                invoice.getInvoiceCode(), paymentMethod, "PENDING", finalAmount,
                 payosLink == null ? null : payosLink.checkoutUrl(), payosLink == null ? null : payosLink.qrCode());
+    }
+
+    private String normalizePaymentMethod(String paymentMethod) {
+        if (paymentMethod == null || paymentMethod.isBlank()) return PaymentMethod.COD;
+        String normalized = paymentMethod.trim().toUpperCase(java.util.Locale.ROOT);
+        return PaymentMethod.CHECKOUT_METHODS[0].equals(normalized)
+                || PaymentMethod.CHECKOUT_METHODS[1].equals(normalized) ? normalized : PaymentMethod.COD;
     }
 
     private int branchId(CheckoutRequest request) {

@@ -17,6 +17,12 @@ import vn.aeoc.crm.data.request.OrderRequest;
 import vn.aeoc.crm.data.response.OrderResponse;
 import vn.aeoc.crm.repository.sale.OrderItemRepository;
 import vn.aeoc.crm.repository.sale.OrderRepository;
+import vn.aeoc.crm.repository.sale.InvoiceRepository;
+import vn.aeoc.crm.repository.sale.PaymentRepository;
+import vn.aeoc.crm.data.constant.OrderStatus;
+import vn.aeoc.crm.constant.InvoiceConstant;
+import vn.aeoc.entity.data.mysql.sale.Invoice;
+import vn.aeoc.entity.data.mysql.sale.Payment;
 import vn.aeoc.entity.data.mysql.sale.Order;
 import vn.aeoc.entity.data.mysql.sale.OrderItem;
 
@@ -31,11 +37,19 @@ import java.util.*;
 public class OrderService extends BaseService<OrderRepository, Order, Integer> {
     private final OrderItemRepository orderItemRepository;
     private final OrderItemService orderItemService;
+    private final InvoiceRepository invoiceRepository;
+    private final PaymentRepository paymentRepository;
+    private final InvoiceService invoiceService;
 
-    public OrderService(OrderRepository repository, OrderItemRepository orderItemRepository, OrderItemService orderItemService, QueryExecutor queryExecutor) {
+    public OrderService(OrderRepository repository, OrderItemRepository orderItemRepository, OrderItemService orderItemService,
+                        InvoiceRepository invoiceRepository, PaymentRepository paymentRepository,
+                        InvoiceService invoiceService, QueryExecutor queryExecutor) {
         super(repository, queryExecutor);
         this.orderItemRepository = orderItemRepository;
         this.orderItemService = orderItemService;
+        this.invoiceRepository = invoiceRepository;
+        this.paymentRepository = paymentRepository;
+        this.invoiceService = invoiceService;
     }
 
     public Page<Order> getByCriteria(
@@ -73,8 +87,74 @@ public class OrderService extends BaseService<OrderRepository, Order, Integer> {
         return response;
     }
 
+    public Page<OrderResponse> getMyOrders(Integer userId, String orderStatus, Pageable pageable) {
+        Long count = repository.countByUserId(userId, orderStatus);
+        pageable.setTotal(count);
+        return new Page<>(pageable, repository.findByUserId(userId, orderStatus, pageable));
+    }
+
+    public OrderResponse getMyOrder(Integer userId, Integer orderId) {
+        Order order = repository.getById(orderId);
+        if (order == null || !userId.equals(order.getUserId())) throw new AppException(ErrorCode.DATA_NOT_FOUND);
+        Invoice invoice = invoiceRepository.findByOrderId(orderId);
+        List<OrderItem> items = orderItemRepository.fetchOrderItemDetail(orderId);
+        List<Payment> payments = invoice == null ? List.of() : paymentRepository.findAllByInvoiceId(invoice.getId());
+        return new OrderResponse(order, items, invoice, payments);
+    }
+
+    @Transactional
+    public void cancelMyOrder(Integer userId, Integer orderId) {
+        Order order = repository.getById(orderId);
+        if (order == null || !userId.equals(order.getUserId())) throw new AppException(ErrorCode.DATA_NOT_FOUND);
+        Invoice invoice = invoiceRepository.findByOrderId(orderId);
+        if (!OrderStatus.NEW.equals(order.getStatus()) || invoice == null
+                || invoice.getStatus() != InvoiceConstant.STATUS_UNPAID) {
+            throw new AppException("Chỉ có thể hủy đơn hàng mới chưa thanh toán", ErrorCode.BAD_REQUEST.code);
+        }
+        invoiceService.cancelOrderInvoice(invoice.getId());
+    }
+
+    @Transactional
+    public void advance(Integer orderId, String to) {
+        Order order = repository.getById(orderId);
+        if (order == null) throw new AppException(ErrorCode.DATA_NOT_FOUND);
+        Invoice invoice = invoiceRepository.findByOrderId(orderId);
+        if (invoice == null) throw new AppException(ErrorCode.DATA_NOT_FOUND);
+        if (invoice.getStatus() == InvoiceConstant.STATUS_CANCEL || invoice.getStatus() == InvoiceConstant.STATUS_REFUNDED) {
+            throw new AppException("Không thể cập nhật đơn hàng đã hủy hoặc hoàn tiền", ErrorCode.BAD_REQUEST.code);
+        }
+        boolean valid = (OrderStatus.NEW.equals(order.getStatus()) && OrderStatus.CONFIRMED.equals(to))
+                || (OrderStatus.CONFIRMED.equals(order.getStatus()) && OrderStatus.SHIPPING.equals(to))
+                || (OrderStatus.SHIPPING.equals(order.getStatus()) && OrderStatus.COMPLETED.equals(to));
+        if (!valid) throw new AppException("Trạng thái đơn hàng không hợp lệ", ErrorCode.BAD_REQUEST.code);
+        if (OrderStatus.SHIPPING.equals(to) && "PAYOS".equalsIgnoreCase(invoice.getPaymentMethod())
+                && invoice.getStatus() != InvoiceConstant.STATUS_DONE) {
+            throw new AppException("Đơn PayOS phải thanh toán trước khi giao hàng", ErrorCode.BAD_REQUEST.code);
+        }
+        if (OrderStatus.COMPLETED.equals(to) && "COD".equalsIgnoreCase(invoice.getPaymentMethod())) {
+            invoiceService.markPaid(invoice.getId(), "COD");
+        }
+        String paymentStatus = OrderStatus.COMPLETED.equals(to) && "COD".equalsIgnoreCase(invoice.getPaymentMethod())
+                ? vn.aeoc.crm.data.constant.PaymentStatus.PAID : order.getPaymentStatus();
+        repository.updateStatusAndPayment(orderId, to, paymentStatus);
+    }
+
     public void updateStatus(Integer id, Order o) {
+        Invoice invoice = invoiceRepository.findByOrderId(id);
+        if (invoice != null && o.getPaymentStatus() != null) {
+            throw new AppException("Không thể sửa trạng thái thanh toán của đơn checkout", ErrorCode.BAD_REQUEST.code);
+        }
+        if (invoice != null) throw new AppException("Vui lòng dùng API chuyển trạng thái đơn hàng", ErrorCode.BAD_REQUEST.code);
         repository.updateStatus(id, o);
+    }
+
+    @Override
+    public Order update(Integer id, Order order) {
+        Invoice invoice = invoiceRepository.findByOrderId(id);
+        if (invoice != null && (order.getPaymentStatus() != null || order.getStatus() != null)) {
+            throw new AppException("Không thể sửa trạng thái thanh toán hoặc đơn checkout trực tiếp", ErrorCode.BAD_REQUEST.code);
+        }
+        return super.update(id, order);
     }
 
     @Transactional

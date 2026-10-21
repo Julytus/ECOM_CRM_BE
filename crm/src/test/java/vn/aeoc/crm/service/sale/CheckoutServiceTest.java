@@ -76,6 +76,17 @@ class CheckoutServiceTest {
     }
 
     @Test
+    void previewDefaultsMissingPaymentMethodToCod() {
+        CheckoutRequest request = request(null);
+        when(orderItemService.calculate(request.getItems()))
+                .thenReturn(new OrderItemService.CalculatedItems(List.of(), 100_000));
+
+        var result = service.preview(request);
+
+        assertEquals(130_000, result.finalAmount());
+    }
+
+    @Test
     void previewUsesVoucherEvaluationDiscount() {
         CheckoutRequest request = request(PaymentMethod.COD);
         request.setVoucherCode("SAVE");
@@ -117,6 +128,31 @@ class CheckoutServiceTest {
         verify(paymentRepository).insert(argThat(payment -> payment.getOrderId().equals(5)
                 && payment.getInvoiceId().equals(6) && "COD".equals(payment.getPaymentProvider())
                 && "PENDING".equals(payment.getStatus())));
+    }
+
+    @Test
+    void submitDefaultsUnknownPaymentMethodToCodAcrossCheckoutRecords() {
+        CheckoutRequest request = request("unsupported");
+        when(orderItemService.calculate(request.getItems()))
+                .thenReturn(new OrderItemService.CalculatedItems(List.of(), 100_000));
+        Order order = new Order();
+        order.setId(5);
+        order.setCode("ORD-5");
+        when(orderRepository.insertCheckoutOrder(any(Order.class), anyString())).thenAnswer(invocation -> {
+            assertEquals(PaymentMethod.COD, ((Order) invocation.getArgument(0)).getPaymentMethod());
+            return order;
+        });
+        Invoice invoice = new Invoice();
+        invoice.setId(6);
+        invoice.setInvoiceCode("INV-6");
+        when(invoiceRepository.insertFromOrder(5, 100_000, 0, 30_000, PaymentMethod.COD, null, 7, 9)).thenReturn(invoice);
+        when(paymentRepository.insert(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var response = service.submit(request, 9);
+
+        assertEquals(PaymentMethod.COD, response.paymentMethod());
+        verify(paymentRepository).insert(argThat(payment -> PaymentMethod.COD.equals(payment.getPaymentProvider())));
+        verify(paymentService, never()).requestPayosLink(any(Long.class), any(Double.class), anyString(), anyString(), anyString());
     }
 
     @Test

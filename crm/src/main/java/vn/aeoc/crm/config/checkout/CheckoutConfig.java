@@ -11,4 +11,7 @@ public class CheckoutConfig {
 
     @Value("${app.checkout.default-branch-id:0}")
     public int defaultBranchId;
+
+    @Value("${app.checkout.payos-expire-minutes:30}")
+    public int payosExpireMinutes;
 }
