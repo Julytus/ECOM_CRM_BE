@@ -39,7 +39,7 @@ public class ResourceRepository extends AbsMysqlRepository<ResourceRecord, Resou
                     .like(DSL.val("%" + name.trim().toLowerCase() + "%")));
         }
 
-        if (active != null) {
+        if (CommonUtils.NVL(active) > 0) {
             condition = condition.and(RESOURCE.ACTIVE.eq(active));
         }
 
@@ -114,15 +114,19 @@ public class ResourceRepository extends AbsMysqlRepository<ResourceRecord, Resou
     }
 
     public Resource updateResource(Resource resource) {
-        dslContext.update(RESOURCE)
+        var update = dslContext.update(RESOURCE)
                 .set(RESOURCE.NAME, resource.getName())
                 .set(RESOURCE.DESCRIPTION, resource.getDescription())
                 .set(RESOURCE.CODE, resource.getCode())
                 .set(RESOURCE.URI, resource.getUri())
-                .set(RESOURCE.ACTIONS, CommonUtils.getJSON(resource.getActions()))
-                .set(RESOURCE.MODULE_ID, resource.getModuleId())
-                .where(RESOURCE.ID.eq(resource.getId()))
-                .execute();
+                .set(RESOURCE.ACTIONS, CommonUtils.getJSON(resource.getActions()));
+        if (resource.getActive() != null) {
+            update = update.set(RESOURCE.ACTIVE, resource.getActive());
+        }
+        if (resource.getModuleId() != null) {
+            update = update.set(RESOURCE.MODULE_ID, resource.getModuleId());
+        }
+        update.where(RESOURCE.ID.eq(resource.getId())).execute();
         return resource;
     }
 
