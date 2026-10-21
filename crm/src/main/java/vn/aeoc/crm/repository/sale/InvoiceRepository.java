@@ -346,15 +346,15 @@ public class InvoiceRepository extends AbsMysqlRepository<InvoiceRecord, Invoice
         var end = start.plusDays(1);
 
         Condition cond = INVOICE.STATUS.eq(InvoiceConstant.STATUS_DONE)
-                .and(INVOICE.CREATED_TIME.ge(start))
-                .and(INVOICE.CREATED_TIME.lt(end));
+                .and(DSL.coalesce(INVOICE.RECEIPT_DATE, INVOICE.CREATED_TIME).ge(start))
+                .and(DSL.coalesce(INVOICE.RECEIPT_DATE, INVOICE.CREATED_TIME).lt(end));
         if (CommonUtils.NVL(branchId) > 0) {
             cond = cond.and(INVOICE.BRANCH_ID.eq(branchId));
         }
 
         return dslContext
                 .select(
-                        DSL.hour(INVOICE.CREATED_TIME).as("hour"),
+                        DSL.hour(DSL.coalesce(INVOICE.RECEIPT_DATE, INVOICE.CREATED_TIME)).as("hour"),
 
                         DSL.count(INVOICE.ID).as("totalInvoice"),
 
@@ -366,10 +366,10 @@ public class InvoiceRepository extends AbsMysqlRepository<InvoiceRecord, Invoice
                 .from(INVOICE)
                 .where(cond)
                 .groupBy(
-                        DSL.hour(INVOICE.CREATED_TIME)
+                        DSL.hour(DSL.coalesce(INVOICE.RECEIPT_DATE, INVOICE.CREATED_TIME))
                 )
                 .orderBy(
-                        DSL.hour(INVOICE.CREATED_TIME)
+                        DSL.hour(DSL.coalesce(INVOICE.RECEIPT_DATE, INVOICE.CREATED_TIME))
                 )
                 .fetchInto(RevenueHourChart.class);
 
@@ -381,8 +381,8 @@ public class InvoiceRepository extends AbsMysqlRepository<InvoiceRecord, Invoice
         var end = start.plusDays(1);
 
         Condition cond = INVOICE.STATUS.eq(InvoiceConstant.STATUS_DONE)
-                .and(INVOICE.CREATED_TIME.ge(start))
-                .and(INVOICE.CREATED_TIME.lt(end));
+                .and(DSL.coalesce(INVOICE.RECEIPT_DATE, INVOICE.CREATED_TIME).ge(start))
+                .and(DSL.coalesce(INVOICE.RECEIPT_DATE, INVOICE.CREATED_TIME).lt(end));
         if (CommonUtils.NVL(branchId) > 0) {
             cond = cond.and(INVOICE.BRANCH_ID.eq(branchId));
         }

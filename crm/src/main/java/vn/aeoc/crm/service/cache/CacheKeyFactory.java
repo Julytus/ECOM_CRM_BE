@@ -1,5 +1,7 @@
 package vn.aeoc.crm.service.cache;
 
+import java.time.LocalDate;
+
 public final class CacheKeyFactory {
 
     private CacheKeyFactory() {
@@ -31,6 +33,14 @@ public final class CacheKeyFactory {
 
     public static String reportMonthlyRevenue(Integer branchId, Integer year, Integer month) {
         return "report:invoice:monthly-revenue:branch:" + branchId + ":year:" + year + ":month:" + month;
+    }
+
+    public static String reportRevenue(String report, Integer branchId, LocalDate from, LocalDate to,
+                                       String options, Long version) {
+        return "report:revenue:" + report + ":branch:" + branchId
+                + ":from:" + from + ":to:" + to
+                + ":options:" + (options == null ? "" : options)
+                + ":version:" + (version == null ? 0L : version);
     }
 
     public static String reportInvoiceFrequency(Integer branchId, Integer year, Integer month, Integer page, Integer size) {
