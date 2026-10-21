@@ -34,11 +34,12 @@ public class ResourceController extends BaseController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer active,
             @RequestParam(required = false) Integer moduleId,
+            @RequestParam(required = false) Boolean unassigned,
             @ParameterObject Pageable pageable,
             Principal principal) {
 
         checkPermission(principal, URI, "VIEW");
-        var result = resourceService.getListResourceByCriteria(keyword, active, moduleId, pageable);
+        var result = resourceService.getListResourceByCriteria(keyword, active, moduleId, unassigned, pageable);
         return Mapper.map(result, ApiResponse::okEntity);
     }
 

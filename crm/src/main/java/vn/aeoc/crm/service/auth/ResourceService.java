@@ -30,12 +30,13 @@ public class ResourceService  extends BaseService<
         this.moduleRepository = moduleRepository;
     }
 
-    public Page<Resource> getListResourceByCriteria(String name, Integer active, Integer moduleId, Pageable pageable) {
+    public Page<Resource> getListResourceByCriteria(String name, Integer active, Integer moduleId,
+                                                    Boolean unassigned, Pageable pageable) {
 
         return pageQuery(
                 pageable,
-                () -> repository.getResourceByCriteria(name, active, moduleId, pageable),
-                () -> repository.countResourceByCriteria(name, active, moduleId)
+                () -> repository.getResourceByCriteria(name, active, moduleId, unassigned, pageable),
+                () -> repository.countResourceByCriteria(name, active, moduleId, unassigned)
         );
     }
 

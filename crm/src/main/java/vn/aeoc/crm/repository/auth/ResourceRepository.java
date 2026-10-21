@@ -32,7 +32,7 @@ public class ResourceRepository extends AbsMysqlRepository<ResourceRecord, Resou
         return RESOURCE;
     }
 
-    private Condition getWhereCondition(String name, Integer active, Integer moduleId) {
+    private Condition getWhereCondition(String name, Integer active, Integer moduleId, Boolean unassigned) {
         Condition condition = DSL.trueCondition();
         if (!StringUtils.isBlank(name)) {
             condition = condition.and(DSL.lower(RESOURCE.NAME)
@@ -43,7 +43,10 @@ public class ResourceRepository extends AbsMysqlRepository<ResourceRecord, Resou
             condition = condition.and(RESOURCE.ACTIVE.eq(active));
         }
 
-        if (moduleId != null) {
+        // When both filters are supplied, unassigned takes precedence over moduleId.
+        if (Boolean.TRUE.equals(unassigned)) {
+            condition = condition.and(RESOURCE.MODULE_ID.isNull());
+        } else if (moduleId != null) {
             condition = condition.and(RESOURCE.MODULE_ID.eq(moduleId));
         }
 
@@ -54,15 +57,15 @@ public class ResourceRepository extends AbsMysqlRepository<ResourceRecord, Resou
      * Lấy theo điều kiện
      */
     public List<Resource> getResourceByCriteria(String name,
-                                                Integer active, Integer moduleId, Pageable pageable) {
-        return getListByCriteria(getWhereCondition(name, active, moduleId), RESOURCE.ID.desc(), pageable);
+                                                Integer active, Integer moduleId, Boolean unassigned, Pageable pageable) {
+        return getListByCriteria(getWhereCondition(name, active, moduleId, unassigned), RESOURCE.ID.desc(), pageable);
     }
 
     /**
      * Đếm số resource theo điều kiện
      */
-    public long countResourceByCriteria(String name, Integer active, Integer moduleId) {
-        return getCountWithCriteria(getWhereCondition(name, active, moduleId));
+    public long countResourceByCriteria(String name, Integer active, Integer moduleId, Boolean unassigned) {
+        return getCountWithCriteria(getWhereCondition(name, active, moduleId, unassigned));
 
     }
 
