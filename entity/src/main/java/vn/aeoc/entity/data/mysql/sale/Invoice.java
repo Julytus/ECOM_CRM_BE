@@ -26,6 +26,9 @@ public class Invoice {
     private Integer userId;
     private Integer customerId;
     private Integer branchId;
+    private Integer orderId;
+    private Double shippingFee;
+    private String paymentMethod;
 
     private String voucherCode;
     private Integer voucherId;

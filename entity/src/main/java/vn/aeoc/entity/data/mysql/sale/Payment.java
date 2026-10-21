@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 @Data
 public class Payment {
     private Integer id;
+    private Integer orderId;
     private Integer invoiceId;
     private Double amount;
     private String paymentType;

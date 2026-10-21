@@ -81,6 +81,9 @@ rag:
 app:
   name: Base Backend
   version: 1.0.0
+  checkout:
+    shipping-fee: 30000
+    default-branch-id: 0
   cache:
     template:
       l1-max-size: 50000
