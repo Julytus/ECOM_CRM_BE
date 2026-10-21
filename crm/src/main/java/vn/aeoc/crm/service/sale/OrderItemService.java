@@ -44,6 +44,26 @@ public class OrderItemService
             Integer orderId,
             List<OrderItemRequest> requests) {
 
+        return createMany(orderId, calculate(requests));
+    }
+
+    public Double createMany(Integer orderId, CalculatedItems calculatedItems) {
+        List<OrderItem> items = calculatedItems.items().stream().map(item -> {
+            OrderItem copy = new OrderItem();
+            copy.setOrderId(orderId);
+            copy.setProductId(item.getProductId());
+            copy.setProductVariantId(item.getProductVariantId());
+            copy.setPrice(item.getPrice());
+            copy.setQuantity(item.getQuantity());
+            copy.setTotalPrice(item.getTotalPrice());
+            return copy;
+        }).toList();
+        repository.insertMany(items);
+        return calculatedItems.subtotal();
+    }
+
+    public CalculatedItems calculate(List<OrderItemRequest> requests) {
+
         if ((requests == null) || requests.isEmpty()) {
             throw new AppException(ErrorCode.INPUT_WRONG);
         }
@@ -54,7 +74,8 @@ public class OrderItemService
 
         for (OrderItemRequest req : requests) {
 
-            if (req.getQuantity() == null || req.getQuantity() <= 0) {
+            if (req == null || req.getProductVariantId() == null || req.getProductVariantId() <= 0
+                    || req.getQuantity() == null || req.getQuantity() <= 0) {
                 throw new AppException(ErrorCode.INPUT_WRONG);
             }
 
@@ -71,7 +92,6 @@ public class OrderItemService
             orderPrice = orderPrice + totalPrice;
 
             OrderItem item = new OrderItem();
-            item.setOrderId(orderId);
             item.setProductId(variant.getProductId());
             item.setProductVariantId(req.getProductVariantId());
             item.setPrice(price);
@@ -81,7 +101,8 @@ public class OrderItemService
             items.add(item);
         }
 
-        repository.insertMany(items);
-        return orderPrice;
+        return new CalculatedItems(List.copyOf(items), orderPrice);
     }
+
+    public record CalculatedItems(List<OrderItem> items, double subtotal) {}
 }

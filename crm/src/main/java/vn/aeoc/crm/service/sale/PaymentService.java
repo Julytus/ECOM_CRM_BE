@@ -28,6 +28,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 @Slf4j
@@ -68,77 +69,68 @@ public class PaymentService {
             throw new IllegalStateException("Invoice already paid");
         }
 
-        double amountInVND = invoice.getFee();
-        int amount = (int) amountInVND;
-        String description = invoice.getInvoiceCode();
-
         String cancelUrl = payOSConfig.baseUrl + "/payment/" + invoiceId + "/cancel";
         String returnUrl = payOSConfig.baseUrl + "/payment/" + invoiceId + "/return";
+        PayosLink link = requestPayosLink(generateOrderCode(), invoice.getFee(), invoice.getInvoiceCode(), returnUrl, cancelUrl);
 
-        long orderCode = generateOrderCode(invoiceId);
+        Payment payment = new Payment();
+        payment.setInvoiceId(invoiceId);
+        payment.setAmount(invoice.getFee());
+        payment.setPaymentType("FULL");
+        payment.setStatus("PENDING");
+        payment.setPaymentProvider("PAYOS");
+        payment.setOrderCode(link.orderCode());
+        payment.setPaymentLinkId(link.paymentLinkId());
+        payment.setCheckoutUrl(link.checkoutUrl());
+        payment.setQrCode(link.qrCode());
+        return paymentRepository.insert(payment);
+    }
 
+    public PayosLink requestPayosLink(long orderCode, double amount, String description, String returnUrl, String cancelUrl) {
+        int roundedAmount = (int) amount;
         String rawData = String.format(
                 "amount=%d&cancelUrl=%s&description=%s&orderCode=%d&returnUrl=%s",
-                amount, cancelUrl, description, orderCode, returnUrl
+                roundedAmount, cancelUrl, description, orderCode, returnUrl
         );
-
         String signature = hmacSha256(rawData, payOSConfig.checksumKey);
 
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("orderCode", orderCode);
-        body.put("amount", amount);
+        body.put("amount", roundedAmount);
         body.put("description", description);
         body.put("cancelUrl", cancelUrl);
         body.put("returnUrl", returnUrl);
-
-        Map<String, Object> item = new LinkedHashMap<>();
-        item.put("name", "Invoice Payment");
-        item.put("quantity", 1);
-        item.put("price", amount);
-        body.put("items", List.of(item));
-
+        body.put("items", List.of(Map.of("name", "Invoice Payment", "quantity", 1, "price", roundedAmount)));
         body.put("signature", signature);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("x-client-id", payOSConfig.clientId);
         headers.set("x-api-key", payOSConfig.apiKey);
-
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
-
-        ResponseEntity<String> response = restTemplate.postForEntity(
-                payOSConfig.apiUrl, entity, String.class
-        );
+        ResponseEntity<String> response = restTemplate.postForEntity(payOSConfig.apiUrl, entity, String.class);
 
         try {
             JsonNode root = objectMapper.readTree(response.getBody());
-            String code = root.get("code").asText();
-            if (!"00".equals(code)) {
-                String desc = root.has("desc") ? root.get("desc").asText() : "Unknown error";
-                throw new RuntimeException("PayOS API error: " + desc);
+            if (!"00".equals(root.path("code").asText())) {
+                throw new RuntimeException("PayOS API error: " + root.path("desc").asText("Unknown error"));
             }
-
-            JsonNode data = root.get("data");
-            String checkoutUrl = data.get("checkoutUrl").asText();
-            String qrCode = data.has("qrCode") && !data.get("qrCode").isNull() ? data.get("qrCode").asText() : null;
-            String paymentLinkId = data.get("paymentLinkId").asText();
-
-            Payment payment = new Payment();
-            payment.setInvoiceId(invoiceId);
-            payment.setAmount(amountInVND);
-            payment.setPaymentType("FULL");
-            payment.setStatus("PENDING");
-            payment.setOrderCode(orderCode);
-            payment.setPaymentLinkId(paymentLinkId);
-            payment.setCheckoutUrl(checkoutUrl);
-            payment.setQrCode(generateQrCodeBase64(qrCode, 300, 300));
-
-            return paymentRepository.insert(payment);
-
+            JsonNode data = root.path("data");
+            String qrText = data.path("qrCode").isMissingNode() || data.path("qrCode").isNull()
+                    ? null : data.path("qrCode").asText();
+            String qrCode = qrText == null ? null : generateQrCodeBase64(qrText, 300, 300);
+            return new PayosLink(orderCode, data.path("paymentLinkId").asText(),
+                    data.path("checkoutUrl").asText(), qrCode);
         } catch (Exception e) {
             if (e instanceof RuntimeException) throw (RuntimeException) e;
             throw new RuntimeException("Failed to parse PayOS response: " + response.getBody(), e);
         }
+    }
+
+    public record PayosLink(long orderCode, String paymentLinkId, String checkoutUrl, String qrCode) {}
+
+    public long generateUniqueOrderCode() {
+        return generateOrderCode();
     }
 
     public String generateQrCodeBase64(String text, int width, int height) {
@@ -198,10 +190,13 @@ public class PaymentService {
         }
     }
 
-    private long generateOrderCode(Integer invoiceId) {
-        long min = 1_000_000;
-        long max = 9_999_999;
-        return min + (long) (Math.random() * (max - min + 1));
+    private long generateOrderCode() {
+        long orderCode;
+        do {
+            orderCode = (System.currentTimeMillis() % 10_000_000L) * 100L
+                    + ThreadLocalRandom.current().nextInt(100);
+        } while (paymentRepository.existsByOrderCode(orderCode));
+        return orderCode;
     }
 
     private String hmacSha256(String data, String key) {

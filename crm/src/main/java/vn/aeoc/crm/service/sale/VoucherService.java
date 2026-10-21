@@ -74,10 +74,32 @@ public class VoucherService extends BaseService<VoucherRepository, Voucher, Inte
         Voucher voucher = tuple2.v1();
         Invoice invoice = tuple2.v2();
 
-        validateVoucher(invoice, voucher);
-        Double discount = calculateDiscount(invoice.getAmount(), voucher);
-        return discount;
+        return evaluate(voucher, invoice.getAmount(), invoice.getBranchId(), invoice.getCustomerId()).discount();
     }
+
+    public VoucherEvaluation evaluate(String code, double amount, Integer branchId, Integer customerId) {
+        Voucher voucher = repository.getByCode(code);
+        return evaluate(voucher, amount, branchId, customerId);
+    }
+
+    public Voucher lockByCode(String code) {
+        return repository.lockByCode(code);
+    }
+
+    public VoucherEvaluation evaluateLocked(Voucher voucher, double amount, Integer branchId, Integer customerId) {
+        return evaluate(voucher, amount, branchId, customerId);
+    }
+
+    private VoucherEvaluation evaluate(Voucher voucher, Double amount, Integer branchId, Integer customerId) {
+        Invoice invoice = new Invoice();
+        invoice.setAmount(amount);
+        invoice.setBranchId(branchId);
+        invoice.setCustomerId(customerId);
+        validateVoucher(invoice, voucher);
+        return new VoucherEvaluation(voucher, calculateDiscount(amount, voucher));
+    }
+
+    public record VoucherEvaluation(Voucher voucher, double discount) {}
 
     private Double calculateDiscount(Double invoiceAmount, Voucher voucher) {
 
@@ -165,7 +187,7 @@ public class VoucherService extends BaseService<VoucherRepository, Voucher, Inte
         }
 
         // 6. Giới hạn lượt sử dụng theo customer, khách vãng lai không cần check
-        if (CommonUtils.NVL(invoice.getCustomerId()) > 0) {
+        if (invoice.getCustomerId() != null && invoice.getCustomerId() > 0) {
             Integer customerUsedCount =
                     customerVoucherUsageRepository.getUsedCount(
                             voucher.getId(),

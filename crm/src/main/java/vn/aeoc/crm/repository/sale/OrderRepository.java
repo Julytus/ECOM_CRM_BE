@@ -115,4 +115,34 @@ public class OrderRepository
 
         return insertReturning(o);
     }
+
+    public Order insertCheckoutOrder(Order order, String address) {
+        order.setCode(CommonUtils.nextCode("ORD"));
+        order.setAddress(address);
+        order.setStatus("NEW");
+        order.setPaymentStatus(PaymentStatus.UNPAID);
+        return dslContext.insertInto(ORDER)
+                .set(ORDER.CODE, order.getCode())
+                .set(ORDER.USER_ID, order.getUserId())
+                .set(ORDER.TOTAL_AMOUNT, order.getTotalAmount())
+                .set(ORDER.DISCOUNT_AMOUNT, order.getDiscountAmount())
+                .set(ORDER.FINAL_AMOUNT, order.getFinalAmount())
+                .set(ORDER.STATUS, order.getStatus())
+                .set(ORDER.PAYMENT_STATUS, order.getPaymentStatus())
+                .set(ORDER.PAYMENT_METHOD, order.getPaymentMethod())
+                .set(ORDER.NOTE, order.getNote())
+                .set(ORDER.ADDRESS, order.getAddress())
+                .set(ORDER.BUYER_NAME, order.getBuyerName())
+                .set(ORDER.BUYER_PHONE, order.getBuyerPhone())
+                .set(ORDER.BUYER_EMAIL, order.getBuyerEmail())
+                .set(ORDER.RECEIVER_NAME, order.getReceiverName())
+                .set(ORDER.RECEIVER_PHONE, order.getReceiverPhone())
+                .set(ORDER.SHIPPING_FEE, order.getShippingFee())
+                .set(ORDER.VOUCHER_ID, order.getVoucherId())
+                .set(ORDER.VOUCHER_CODE, order.getVoucherCode())
+                .set(ORDER.BRANCH_ID, order.getBranchId())
+                .set(ORDER.CUSTOMER_ID, order.getCustomerId())
+                .returning()
+                .fetchOneInto(Order.class);
+    }
 }

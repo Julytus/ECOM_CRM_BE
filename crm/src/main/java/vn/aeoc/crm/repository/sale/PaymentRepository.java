@@ -31,9 +31,11 @@ public class PaymentRepository {
     public Payment insert(Payment payment) {
         return dsl.insertInto(PAYMENT)
                 .set(PAYMENT.INVOICE_ID, payment.getInvoiceId())
+                .set(PAYMENT.ORDER_ID, payment.getOrderId())
                 .set(PAYMENT.AMOUNT, payment.getAmount())
                 .set(PAYMENT.PAYMENT_TYPE, payment.getPaymentType())
                 .set(PAYMENT.STATUS, payment.getStatus())
+                .set(PAYMENT.PAYMENT_PROVIDER, payment.getPaymentProvider())
                 .set(PAYMENT.ORDER_CODE, payment.getOrderCode())
                 .set(PAYMENT.PAYMENT_LINK_ID, payment.getPaymentLinkId())
                 .set(PAYMENT.CHECKOUT_URL, payment.getCheckoutUrl())
@@ -41,6 +43,10 @@ public class PaymentRepository {
                 .returning()
                 .fetchOne()
                 .into(Payment.class);
+    }
+
+    public boolean existsByOrderCode(long orderCode) {
+        return dsl.fetchExists(dsl.selectOne().from(PAYMENT).where(PAYMENT.ORDER_CODE.eq(orderCode)));
     }
 
     public int updateStatus(Integer id, String status) {

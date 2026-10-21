@@ -67,6 +67,13 @@ public class VoucherRepository extends AbsMysqlRepository<VoucherRecord, Voucher
         return getOne(VOUCHER.CODE.eq(code));
     }
 
+    public Voucher lockByCode(String code) {
+        return dslContext.selectFrom(VOUCHER)
+                .where(VOUCHER.CODE.eq(code))
+                .forUpdate()
+                .fetchOneInto(Voucher.class);
+    }
+
     public Boolean existByCode(String code) {
         return exists(VOUCHER.CODE.eq(code));
     }

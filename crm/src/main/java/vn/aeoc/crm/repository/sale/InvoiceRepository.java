@@ -206,6 +206,39 @@ public class InvoiceRepository extends AbsMysqlRepository<InvoiceRecord, Invoice
         return insertReturning(invoice);
     }
 
+    public Invoice insertFromOrder(Integer orderId, double subtotal, double discount, double shippingFee,
+                                    String paymentMethod, Integer customerId, Integer branchId, Integer userId) {
+        Invoice invoice = new Invoice();
+        invoice.setInvoiceCode(CommonUtils.nextCode("INV"));
+        invoice.setInvoiceType(InvoiceConstant.SALE_INVOICE);
+        invoice.setStatus(InvoiceConstant.STATUS_UNPAID);
+        invoice.setAmount(subtotal);
+        invoice.setDiscount(discount);
+        invoice.setShippingFee(shippingFee);
+        invoice.setFee(subtotal - discount + shippingFee);
+        invoice.setPaymentMethod(paymentMethod);
+        invoice.setOrderId(orderId);
+        invoice.setCustomerId(customerId);
+        invoice.setBranchId(branchId);
+        invoice.setUserId(userId);
+
+        return dslContext.insertInto(INVOICE)
+                .set(INVOICE.INVOICE_CODE, invoice.getInvoiceCode())
+                .set(INVOICE.INVOICE_TYPE, invoice.getInvoiceType())
+                .set(INVOICE.STATUS, invoice.getStatus())
+                .set(INVOICE.AMOUNT, invoice.getAmount())
+                .set(INVOICE.DISCOUNT, invoice.getDiscount())
+                .set(INVOICE.FEE, invoice.getFee())
+                .set(INVOICE.USER_ID, invoice.getUserId())
+                .set(INVOICE.CUSTOMER_ID, invoice.getCustomerId())
+                .set(INVOICE.BRANCH_ID, invoice.getBranchId())
+                .set(INVOICE.ORDER_ID, invoice.getOrderId())
+                .set(INVOICE.SHIPPING_FEE, invoice.getShippingFee())
+                .set(INVOICE.PAYMENT_METHOD, invoice.getPaymentMethod())
+                .returning()
+                .fetchOneInto(Invoice.class);
+    }
+
     public Integer updateStatus(Integer id, Integer status) {
         return updateField(id, INVOICE.STATUS, status);
     }
