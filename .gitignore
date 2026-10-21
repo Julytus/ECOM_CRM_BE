@@ -21,3 +21,13 @@ volumes
 design/*
 k8s/scripts/utils/__pycache__/
 #entity/src/main/resources/config/application.properties
+# >>> harness (generated runtime — never commit) >>>
+harness/state/
+harness/standards/.snapshots/
+harness/e2e/RUN-LOG.md
+.harness/
+.claude/settings.json
+.claude/settings.local.json
+# <<< harness <<<
+
+plans/

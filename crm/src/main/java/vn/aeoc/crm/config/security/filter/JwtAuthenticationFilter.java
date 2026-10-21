@@ -33,6 +33,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/user/authenticate"
     );
 
+    /** Các API public nhưng chỉ cho method GET. */
+    private static final List<String> WHITE_LIST_GET_API = List.of(
+            "/product/list-detail",
+            "/product/list"
+    );
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         // Bỏ qua preflight request của CORS
@@ -116,6 +122,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = requestUri.substring(contextPath.length());
 
         return WHITE_LIST_API.contains(path)
+                || ("GET".equalsIgnoreCase(request.getMethod()) && WHITE_LIST_GET_API.contains(path))
                 || path.equals("/swagger-ui.html")
                 || path.equals("/swagger-ui/index.html")
                 || path.startsWith("/swagger-ui/")

@@ -23,12 +23,7 @@ public class CheckoutRequest {
     private Integer customerId;
 
     public void validate() {
-        if (items == null || items.isEmpty()
-                || blank(buyerName) || blank(buyerPhone)
-                || blank(receiverName) || blank(receiverPhone)
-                || blank(addressLine) || !PaymentMethod.isCheckoutMethod(paymentMethod)) {
-            throw new AppException(ErrorCode.INPUT_WRONG);
-        }
+        if (items == null || items.isEmpty()) throw new AppException(ErrorCode.INPUT_WRONG);
     }
 
     private boolean blank(String value) {
