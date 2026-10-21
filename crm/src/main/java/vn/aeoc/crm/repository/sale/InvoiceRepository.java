@@ -18,7 +18,9 @@ import vn.aeoc.entity.data.mysql.sale.Invoice;
 import vn.entity.backend.tables.records.InvoiceRecord;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static vn.entity.backend.tables.BoughtProduct.BOUGHT_PRODUCT;
 import static vn.entity.backend.tables.BoughtService.BOUGHT_SERVICE;
@@ -241,6 +243,17 @@ public class InvoiceRepository extends AbsMysqlRepository<InvoiceRecord, Invoice
 
     public Integer updateStatus(Integer id, Integer status) {
         return updateField(id, INVOICE.STATUS, status);
+    }
+
+    public Integer transitionStatus(Integer id, Integer fromStatus, Integer toStatus,
+                                    Map<? extends Field<?>, ?> extraFields) {
+        Map<Field<?>, Object> fields = new HashMap<>();
+        if (extraFields != null) fields.putAll(extraFields);
+        fields.put(INVOICE.STATUS, toStatus);
+        return dslContext.update(INVOICE)
+                .set(fields)
+                .where(INVOICE.ID.eq(id).and(INVOICE.STATUS.eq(fromStatus)))
+                .execute();
     }
 
     //Xóa mềm

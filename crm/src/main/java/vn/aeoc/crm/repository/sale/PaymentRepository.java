@@ -18,14 +18,16 @@ public class PaymentRepository {
     public Payment findByInvoiceId(Integer invoiceId) {
         return dsl.selectFrom(PAYMENT)
                 .where(PAYMENT.INVOICE_ID.eq(invoiceId))
+                .orderBy(PAYMENT.ID.desc())
+                .limit(1)
                 .fetchOneInto(Payment.class);
     }
 
     public Payment findByPayosOrderCode(Long orderCode) {
         return dsl.selectFrom(PAYMENT)
                 .where(PAYMENT.ORDER_CODE.eq(orderCode))
-                .fetchOne()
-                .into(Payment.class);
+                .fetchOptionalInto(Payment.class)
+                .orElse(null);
     }
 
     public Payment insert(Payment payment) {
@@ -53,6 +55,20 @@ public class PaymentRepository {
         return dsl.update(PAYMENT)
                 .set(PAYMENT.STATUS, status)
                 .where(PAYMENT.ID.eq(id))
+                .execute();
+    }
+
+    public int cancelPendingByInvoice(Integer invoiceId) {
+        return dsl.update(PAYMENT)
+                .set(PAYMENT.STATUS, "CANCELLED")
+                .where(PAYMENT.INVOICE_ID.eq(invoiceId).and(PAYMENT.STATUS.eq("PENDING")))
+                .execute();
+    }
+
+    public int markStatusByInvoice(Integer invoiceId, String status) {
+        return dsl.update(PAYMENT)
+                .set(PAYMENT.STATUS, status)
+                .where(PAYMENT.INVOICE_ID.eq(invoiceId))
                 .execute();
     }
 }

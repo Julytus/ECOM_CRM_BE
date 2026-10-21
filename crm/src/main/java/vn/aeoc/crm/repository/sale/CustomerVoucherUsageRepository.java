@@ -58,4 +58,16 @@ public class CustomerVoucherUsageRepository {
                     .execute();
         }
     }
+
+    public Integer decreaseUsage(Integer voucherId, Integer customerId) {
+        if (CommonUtils.NVL(voucherId) <= 0 || CommonUtils.NVL(customerId) <= 0) {
+            return 0;
+        }
+        return dsl.update(CUSTOMER_VOUCHER_USAGE)
+                .set(CUSTOMER_VOUCHER_USAGE.USED_COUNT, CUSTOMER_VOUCHER_USAGE.USED_COUNT.minus(1))
+                .where(CUSTOMER_VOUCHER_USAGE.VOUCHER_ID.eq(voucherId)
+                        .and(CUSTOMER_VOUCHER_USAGE.CUSTOMER_ID.eq(customerId))
+                        .and(CUSTOMER_VOUCHER_USAGE.USED_COUNT.gt(0)))
+                .execute();
+    }
 }

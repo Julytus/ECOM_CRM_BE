@@ -92,6 +92,14 @@ public class OrderRepository
         updateIgnoreNull(id, o);
     }
 
+    public int updateStatusAndPayment(Integer orderId, String status, String paymentStatus) {
+        return dslContext.update(ORDER)
+                .set(ORDER.STATUS, status)
+                .set(ORDER.PAYMENT_STATUS, paymentStatus)
+                .where(ORDER.ID.eq(orderId))
+                .execute();
+    }
+
     public Order createNewOrder(Order o) {
         o.setCode(CommonUtils.nextCode("ORD"));
 

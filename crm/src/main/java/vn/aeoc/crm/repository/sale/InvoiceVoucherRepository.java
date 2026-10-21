@@ -43,6 +43,21 @@ public class InvoiceVoucherRepository extends AbsMysqlRepository<InvoiceVoucherR
         );
     }
 
+    public Integer deleteByInvoice(Integer invoiceId) {
+        return dslContext.deleteFrom(INVOICE_VOUCHER)
+                .where(INVOICE_VOUCHER.INVOICE_ID.eq(invoiceId))
+                .execute();
+    }
+
+    public Integer findVoucherIdByInvoice(Integer invoiceId) {
+        return dslContext.select(INVOICE_VOUCHER.VOUCHER_ID)
+                .from(INVOICE_VOUCHER)
+                .where(INVOICE_VOUCHER.INVOICE_ID.eq(invoiceId))
+                .orderBy(INVOICE_VOUCHER.ID.desc())
+                .limit(1)
+                .fetchOne(INVOICE_VOUCHER.VOUCHER_ID);
+    }
+
     public Integer countTotalUsed(Integer voucherId) {
         return dslContext.selectCount()
                 .from(INVOICE_VOUCHER)

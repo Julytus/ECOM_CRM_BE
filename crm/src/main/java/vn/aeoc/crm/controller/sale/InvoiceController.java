@@ -100,6 +100,26 @@ public class InvoiceController extends BaseController {
         return Mapper.map(result, ApiResponse::okEntity);
     }
 
+    @PostMapping("/invoice/confirmPayment")
+    public ResponseEntity<ApiResponse<Integer>> confirmPayment(
+            @RequestParam Integer invoiceId,
+            Principal principal
+    ) {
+        checkPermission(principal, URI, "UPDATE");
+        return Mapper.map(service.markPaid(invoiceId, "COD"), ApiResponse::okEntity);
+    }
+
+    @PostMapping("/invoice/refund/{id}")
+    public ResponseEntity<ApiResponse<Integer>> refund(
+            @PathVariable Integer id,
+            @RequestParam(required = false) String reason,
+            Principal principal
+    ) {
+        checkPermission(principal, URI, "UPDATE");
+        checkPermission(principal, "/invoice/", "UPDATE");
+        return Mapper.map(service.refund(id, reason), ApiResponse::okEntity);
+    }
+
     //Tạo hóa đơn thanh toán thành công từ hóa đơn nháp,
     //đồng thời cập nhật trạng thái hóa đơn nháp thành đã thanh toán
     /*
@@ -128,7 +148,7 @@ public class InvoiceController extends BaseController {
             Principal principal
     ) {
         checkPermission(principal, URI, "DELETE");
-        var result = service.delete(id);
+        var result = service.cancelInvoice(id);
         return Mapper.map(result, ApiResponse::okEntity);
     }
 

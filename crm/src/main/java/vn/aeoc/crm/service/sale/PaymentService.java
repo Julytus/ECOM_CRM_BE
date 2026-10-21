@@ -27,6 +27,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -39,18 +40,21 @@ public class PaymentService {
     private final InvoiceRepository invoiceRepository;
     private final ChatSocketHandler socketHandler;
     private final ObjectMapper objectMapper;
+    private final InvoiceService invoiceService;
     private final RestTemplate restTemplate = new RestTemplate();
 
     public PaymentService(PayOSConfig payOSConfig,
                           PaymentRepository paymentRepository,
                           InvoiceRepository invoiceRepository,
                           ChatSocketHandler socketHandler,
-                          ObjectMapper objectMapper) {
+                          ObjectMapper objectMapper,
+                          InvoiceService invoiceService) {
         this.payOSConfig = payOSConfig;
         this.paymentRepository = paymentRepository;
         this.invoiceRepository = invoiceRepository;
         this.socketHandler = socketHandler;
         this.objectMapper = objectMapper;
+        this.invoiceService = invoiceService;
     }
 
     public Payment createPayment(Integer invoiceId) {
@@ -154,6 +158,12 @@ public class PaymentService {
     public String handleWebhook(String requestBody) {
         try {
             JsonNode root = objectMapper.readTree(requestBody);
+            JsonNode data = root.path("data");
+            String signature = root.path("signature").asText("");
+            if (!isValidWebhookSignature(data, signature)) {
+                return "INVALID_SIGNATURE";
+            }
+
             String code = root.get("code").asText();
             boolean success = root.has("success") && root.get("success").asBoolean();
 
@@ -162,7 +172,7 @@ public class PaymentService {
                 return "IGNORED";
             }
 
-            JsonNode data = root.get("data");
+            if (data.isMissingNode() || data.isNull() || !data.hasNonNull("orderCode")) return "IGNORED";
             Long orderCode = data.get("orderCode").asLong();
 
             Payment payment = paymentRepository.findByPayosOrderCode(orderCode);
@@ -171,13 +181,10 @@ public class PaymentService {
                 return "IGNORED";
             }
 
-            payment.setStatus("COMPLETED");
-            paymentRepository.updateStatus(payment.getId(), "COMPLETED");
-
-            invoiceRepository.updateStatus(payment.getInvoiceId(), 1);
+            int updated = invoiceService.markPaid(payment.getInvoiceId(), "PAYOS");
 
             Invoice invoice = invoiceRepository.getById(payment.getInvoiceId());
-            if (invoice != null && invoice.getUserId() != null) {
+            if (updated > 0 && invoice != null && invoice.getUserId() != null) {
                 socketHandler.emitPaymentDone(invoice.getUserId(), payment.getInvoiceId());
             }
 
@@ -188,6 +195,25 @@ public class PaymentService {
             log.error("Failed to handle webhook: {}", e.getMessage(), e);
             return "ERROR: " + e.getMessage();
         }
+    }
+
+    private boolean isValidWebhookSignature(JsonNode data, String signature) {
+        String key = payOSConfig.checksumKey;
+        if (key == null || key.isBlank() || data == null || !data.isObject() || signature == null || signature.isBlank()) {
+            return false;
+        }
+        List<String> keys = new ArrayList<>();
+        data.fieldNames().forEachRemaining(keys::add);
+        Collections.sort(keys);
+        StringJoiner payload = new StringJoiner("&");
+        for (String field : keys) {
+            JsonNode value = data.get(field);
+            String text = value == null || value.isNull() ? "" : value.isValueNode() ? value.asText() : value.toString();
+            payload.add(field + "=" + text);
+        }
+        String expected = hmacSha256(payload.toString(), key);
+        return MessageDigest.isEqual(expected.toLowerCase(Locale.ROOT).getBytes(StandardCharsets.US_ASCII),
+                signature.toLowerCase(Locale.ROOT).getBytes(StandardCharsets.US_ASCII));
     }
 
     private long generateOrderCode() {
