@@ -1,6 +1,7 @@
 package vn.aeoc.crm.controller.auth;
 
 import org.springframework.http.ResponseEntity;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.web.bind.annotation.*;
 import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
@@ -32,11 +33,12 @@ public class ResourceController extends BaseController {
     public ResponseEntity<ApiResponse<Page<Resource>>> getAllResources(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer active,
-            Pageable pageable,
+            @RequestParam(required = false) Integer moduleId,
+            @ParameterObject Pageable pageable,
             Principal principal) {
 
         checkPermission(principal, URI, "VIEW");
-        var result = resourceService.getListResourceByCriteria(keyword, active, pageable);
+        var result = resourceService.getListResourceByCriteria(keyword, active, moduleId, pageable);
         return Mapper.map(result, ApiResponse::okEntity);
     }
 

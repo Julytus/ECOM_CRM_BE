@@ -15,6 +15,7 @@ public class Resource {
     private String actions;
 
     private Integer active;
+    private Integer moduleId;
 
     public Resource() {
 
@@ -28,5 +29,6 @@ public class Resource {
         this.uri = p.uri;
         this.actions = p.actions;
         this.active = p.active;
+        this.moduleId = p.moduleId;
     }
 }

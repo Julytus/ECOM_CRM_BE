@@ -32,15 +32,19 @@ public class ResourceRepository extends AbsMysqlRepository<ResourceRecord, Resou
         return RESOURCE;
     }
 
-    private Condition getWhereCondition(String name, Integer active) {
+    private Condition getWhereCondition(String name, Integer active, Integer moduleId) {
         Condition condition = DSL.trueCondition();
         if (!StringUtils.isBlank(name)) {
             condition = condition.and(DSL.lower(RESOURCE.NAME)
                     .like(DSL.val("%" + name.trim().toLowerCase() + "%")));
         }
 
-        if (CommonUtils.NVL(active) > 0) {
+        if (active != null) {
             condition = condition.and(RESOURCE.ACTIVE.eq(active));
+        }
+
+        if (moduleId != null) {
+            condition = condition.and(RESOURCE.MODULE_ID.eq(moduleId));
         }
 
         return condition;
@@ -50,15 +54,15 @@ public class ResourceRepository extends AbsMysqlRepository<ResourceRecord, Resou
      * Lấy theo điều kiện
      */
     public List<Resource> getResourceByCriteria(String name,
-                                                Integer active, Pageable pageable) {
-        return getListByCriteria(getWhereCondition(name, active), RESOURCE.ID.desc(), pageable);
+                                                Integer active, Integer moduleId, Pageable pageable) {
+        return getListByCriteria(getWhereCondition(name, active, moduleId), RESOURCE.ID.desc(), pageable);
     }
 
     /**
      * Đếm số resource theo điều kiện
      */
-    public long countResourceByCriteria(String name, Integer active) {
-        return getCountWithCriteria(getWhereCondition(name, active));
+    public long countResourceByCriteria(String name, Integer active, Integer moduleId) {
+        return getCountWithCriteria(getWhereCondition(name, active, moduleId));
 
     }
 
@@ -101,7 +105,8 @@ public class ResourceRepository extends AbsMysqlRepository<ResourceRecord, Resou
                         DSL.value(resource.getCode()),
                         DSL.value(resource.getUri()),
                         DSL.value(CommonUtils.getJSON(resource.getActions())),
-                        DSL.value(CommonUtils.NVL(resource.getActive()) > 0 ? resource.getActive() : 1)
+                        DSL.value(CommonUtils.NVL(resource.getActive()) > 0 ? resource.getActive() : 1),
+                        DSL.value(resource.getModuleId())
                 )
                 .execute();
         resource.setId(dslContext.lastID().intValue());
@@ -115,6 +120,7 @@ public class ResourceRepository extends AbsMysqlRepository<ResourceRecord, Resou
                 .set(RESOURCE.CODE, resource.getCode())
                 .set(RESOURCE.URI, resource.getUri())
                 .set(RESOURCE.ACTIONS, CommonUtils.getJSON(resource.getActions()))
+                .set(RESOURCE.MODULE_ID, resource.getModuleId())
                 .where(RESOURCE.ID.eq(resource.getId()))
                 .execute();
         return resource;
@@ -125,5 +131,34 @@ public class ResourceRepository extends AbsMysqlRepository<ResourceRecord, Resou
                 .delete(RESOURCE)
                 .where(RESOURCE.ID.eq(id))
                 .execute();
+    }
+
+    public List<Resource> getResourcesByModuleId(Integer moduleId) {
+        return dslContext.select(getFiled())
+                .from(RESOURCE)
+                .where(RESOURCE.MODULE_ID.eq(moduleId))
+                .orderBy(RESOURCE.ID.desc())
+                .fetchInto(Resource.class);
+    }
+
+    public long countResourcesByModuleId(Integer moduleId) {
+        return dslContext.selectCount().from(RESOURCE)
+                .where(RESOURCE.MODULE_ID.eq(moduleId)).fetchOne(0, long.class);
+    }
+
+    public long countResourcesByIds(List<Integer> ids) {
+        if (ids == null || ids.isEmpty()) return 0;
+        return dslContext.selectCount().from(RESOURCE)
+                .where(RESOURCE.ID.in(ids)).fetchOne(0, long.class);
+    }
+
+    public int assignResources(Integer moduleId, List<Integer> ids) {
+        return dslContext.update(RESOURCE).set(RESOURCE.MODULE_ID, moduleId)
+                .where(RESOURCE.ID.in(ids)).execute();
+    }
+
+    public int unassignResources(List<Integer> ids) {
+        return dslContext.update(RESOURCE).setNull(RESOURCE.MODULE_ID)
+                .where(RESOURCE.ID.in(ids)).execute();
     }
 }
