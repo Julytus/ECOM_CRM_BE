@@ -40,9 +40,9 @@ public class QueryExecutor {
             Supplier<C> s3
     ) {
 
-        CompletableFuture<A> f1 = CompletableFuture.supplyAsync(s1);
-        CompletableFuture<B> f2 = CompletableFuture.supplyAsync(s2);
-        CompletableFuture<C> f3 = CompletableFuture.supplyAsync(s3);
+        CompletableFuture<A> f1 = async(s1);
+        CompletableFuture<B> f2 = async(s2);
+        CompletableFuture<C> f3 = async(s3);
 
         return new Tuple3<>(
                 f1.join(),
@@ -58,10 +58,10 @@ public class QueryExecutor {
             Supplier<D> s4
     ) {
 
-        CompletableFuture<A> f1 = CompletableFuture.supplyAsync(s1);
-        CompletableFuture<B> f2 = CompletableFuture.supplyAsync(s2);
-        CompletableFuture<C> f3 = CompletableFuture.supplyAsync(s3);
-        CompletableFuture<D> f4 = CompletableFuture.supplyAsync(s4);
+        CompletableFuture<A> f1 = async(s1);
+        CompletableFuture<B> f2 = async(s2);
+        CompletableFuture<C> f3 = async(s3);
+        CompletableFuture<D> f4 = async(s4);
 
         return new Tuple4<>(
                 f1.join(),
@@ -79,11 +79,11 @@ public class QueryExecutor {
             Supplier<E> s5
     ) {
 
-        CompletableFuture<A> f1 = CompletableFuture.supplyAsync(s1);
-        CompletableFuture<B> f2 = CompletableFuture.supplyAsync(s2);
-        CompletableFuture<C> f3 = CompletableFuture.supplyAsync(s3);
-        CompletableFuture<D> f4 = CompletableFuture.supplyAsync(s4);
-        CompletableFuture<E> f5 = CompletableFuture.supplyAsync(s5);
+        CompletableFuture<A> f1 = async(s1);
+        CompletableFuture<B> f2 = async(s2);
+        CompletableFuture<C> f3 = async(s3);
+        CompletableFuture<D> f4 = async(s4);
+        CompletableFuture<E> f5 = async(s5);
 
         return new Tuple5<>(
                 f1.join(),
