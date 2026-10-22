@@ -4,6 +4,7 @@ import vn.aeoc.base.util.QueryExecutor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.service.BaseService;
@@ -22,12 +23,24 @@ public class ResourceService  extends BaseService<
         Integer> {
 
     private final ModuleRepository moduleRepository;
+    private final PermissionService permissionService;
 
+
+    @Autowired
+    protected ResourceService(ResourceRepository repository, ModuleRepository moduleRepository,
+                              QueryExecutor queryExecutor, PermissionService permissionService) {
+        super(repository, queryExecutor);
+        this.moduleRepository = moduleRepository;
+        this.permissionService = permissionService;
+    }
 
     protected ResourceService(ResourceRepository repository, ModuleRepository moduleRepository,
                               QueryExecutor queryExecutor) {
-        super(repository, queryExecutor);
-        this.moduleRepository = moduleRepository;
+        this(repository, moduleRepository, queryExecutor, null);
+    }
+
+    private void evictPermissionCache() {
+        if (permissionService != null) permissionService.evictCheckPermissionCache();
     }
 
     public Page<Resource> getListResourceByCriteria(String name, Integer active, Integer moduleId,
@@ -43,14 +56,18 @@ public class ResourceService  extends BaseService<
     @Override
     public Resource insert(Resource resource) {
         validateModule(resource.getModuleId());
-        return repository.insertResource(resource);
+        Resource inserted = repository.insertResource(resource);
+        evictPermissionCache();
+        return inserted;
     }
 
     @Override
     public Resource update(Integer id, Resource resource) {
         validateModule(resource.getModuleId());
         resource.setId(id);
-        return repository.updateResource(resource);
+        Resource updated = repository.updateResource(resource);
+        evictPermissionCache();
+        return updated;
     }
 
     private void validateModule(Integer moduleId) {
@@ -61,6 +78,8 @@ public class ResourceService  extends BaseService<
 
 
     public int updateResourceStatus(Integer id, Integer active) {
-        return repository.updateResourceStatus(id, active);
+        int updated = repository.updateResourceStatus(id, active);
+        evictPermissionCache();
+        return updated;
     }
 }

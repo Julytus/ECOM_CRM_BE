@@ -1,14 +1,15 @@
 package vn.aeoc.crm.service.auth;
 
 import com.google.gson.Gson;
+import com.github.benmanes.caffeine.cache.Cache;
 import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Qualifier;
 import vn.aeoc.base.config.extention.paging.Cursor;
 import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
@@ -21,6 +22,7 @@ import vn.aeoc.crm.repository.auth.UserRepository;
 import vn.aeoc.crm.repository.customer.CustomerRepository;
 import vn.aeoc.crm.service.RestService;
 import org.springframework.transaction.annotation.Transactional;
+import vn.aeoc.crm.service.cache.CacheKeyFactory;
 import vn.aeoc.entity.data.mysql.customer.Customer;
 import vn.aeoc.entity.data.mysql.auth.Role;
 import vn.aeoc.entity.data.mysql.auth.User;
@@ -34,7 +36,6 @@ import static vn.aeoc.crm.util.SecurityUtils.toSimpleSecurityUser;
 
 @Slf4j(topic = "USER-SERVICE")
 @Service
-@RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
     private final PermissionService permissionService;
@@ -43,10 +44,32 @@ public class UserService {
     private final RestService restService;
     private final RoleService roleService;
     private final CustomerRepository customerRepository;
+    private final Cache<String, Object> authCache;
+
+    public UserService(UserRepository userRepository,
+                       PermissionService permissionService,
+                       JWTService jwtService,
+                       JavaMailSender mailSender,
+                       RestService restService,
+                       RoleService roleService,
+                       CustomerRepository customerRepository,
+                       @Qualifier("authCache") Cache<String, Object> authCache) {
+        this.userRepository = userRepository;
+        this.permissionService = permissionService;
+        this.jwtService = jwtService;
+        this.mailSender = mailSender;
+        this.restService = restService;
+        this.roleService = roleService;
+        this.customerRepository = customerRepository;
+        this.authCache = authCache;
+    }
 
     public User getUserById(Integer userId) {
         if (userId == 0) throw new AppException(ErrorCode.LOGIN);
-        return userRepository.getUserById(userId);
+        String cacheKey = CacheKeyFactory.authUser(userId);
+        User cached = (User) authCache.get(cacheKey,
+                key -> copyUser(userRepository.getUserById(userId)));
+        return copyUser(cached);
     }
 
     public User checkPermission(Integer userId, String URI, String action) {
@@ -83,6 +106,49 @@ public class UserService {
         customer.setCreatorId(user.getId());
         customer.setBranchId(user.getBranchId());
         customerRepository.insertReturning(customer);
+    }
+
+    private User copyUser(User source) {
+        if (source == null) return null;
+        User copy = new User();
+        copy.setId(source.getId());
+        copy.setIsOperator(source.getIsOperator());
+        copy.setBranchId(source.getBranchId());
+        copy.setBranchName(source.getBranchName());
+        copy.setRoleId(source.getRoleId());
+        copy.setRoleName(source.getRoleName());
+        copy.setName(source.getName());
+        copy.setAlias(source.getAlias());
+        copy.setAvatar(source.getAvatar());
+        copy.setPhone(source.getPhone());
+        copy.setPhoneVerified(source.getPhoneVerified());
+        copy.setEmail(source.getEmail());
+        copy.setFacebookId(source.getFacebookId());
+        copy.setGplusId(source.getGplusId());
+        copy.setPassword(source.getPassword());
+        copy.setPlainPassword(source.getPlainPassword());
+        copy.setHasPassword(source.getHasPassword());
+        copy.setRegisDate(source.getRegisDate() == null ? null : new java.sql.Timestamp(source.getRegisDate().getTime()));
+        copy.setNewPassword(source.getNewPassword());
+        copy.setRetypeNewPassword(source.getRetypeNewPassword());
+        copy.setActive(source.getActive());
+        copy.setFirstTime(source.getFirstTime());
+        copy.setTime(source.getTime());
+        copy.setToken(source.getToken());
+        copy.setCityName(source.getCityName());
+        copy.setSubdistrictName(source.getSubdistrictName());
+        copy.setGender(source.getGender());
+        copy.setOtp(source.getOtp());
+        copy.setIdToken(source.getIdToken());
+        copy.setDeviceId(source.getDeviceId());
+        copy.setActionType(source.getActionType());
+        copy.setType(source.getType());
+        return copy;
+    }
+
+    private void evictAuthUser(Integer userId) {
+        if (userId == null) return;
+        authCache.invalidate(CacheKeyFactory.authUser(userId));
     }
 
     @Transactional
@@ -136,7 +202,9 @@ public class UserService {
             throw new AppException(ErrorCode.DUPLICATED_USER);
         }
 
-        return userRepository.updateUser(user);
+        User updated = userRepository.updateUser(user);
+        evictAuthUser(user.getId());
+        return updated;
     }
 
     public User updateInfo(User user) {
@@ -148,7 +216,9 @@ public class UserService {
             throw new AppException(ErrorCode.DUPLICATED_USER);
         }
 
-        return userRepository.updateInfo(user);
+        User updated = userRepository.updateInfo(user);
+        evictAuthUser(user.getId());
+        return updated;
     }
 
     public User updateUserPassword(Integer id, String oldPassword, String newPassword) {
@@ -181,15 +251,21 @@ public class UserService {
         User user = new User();
         user.setId(id);
         user.setPassword(encryptedPassword);
-        return userRepository.updatePass(user);
+        User updated = userRepository.updatePass(user);
+        evictAuthUser(id);
+        return updated;
     }
 
     public Integer deleteUser(Integer id) {
-        return userRepository.deleteUser(id);
+        Integer deleted = userRepository.deleteUser(id);
+        evictAuthUser(id);
+        return deleted;
     }
 
     public Integer updateUserStatus(Integer id, Integer active) {
-        return userRepository.updateUserStatus(id, active);
+        Integer updated = userRepository.updateUserStatus(id, active);
+        evictAuthUser(id);
+        return updated;
     }
 
     public TokenResponse authenticate(User user, User userDb, Boolean isRefresh) {
@@ -334,6 +410,7 @@ public class UserService {
 
         String otp = CommonUtils.randomNumber(6);
         userRepository.updateOtp(user.getId(), otp);
+        evictAuthUser(user.getId());
 
         sendEmail(email,EmailContent.buildForgotPasswordEmail(user.getName(), otp));
     }
@@ -358,7 +435,9 @@ public class UserService {
         user.setPassword(encryptedPassword);
 
         userRepository.updatePass(user);
+        evictAuthUser(user.getId());
         userRepository.clearOtp(user.getId());
+        evictAuthUser(user.getId());
     }
 
     public void sendEmail(String email, String content) {

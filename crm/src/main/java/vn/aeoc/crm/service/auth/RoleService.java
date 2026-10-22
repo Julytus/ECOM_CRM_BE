@@ -2,25 +2,30 @@ package vn.aeoc.crm.service.auth;
 
 import vn.aeoc.base.util.QueryExecutor;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.constant.ErrorCode;
 import vn.aeoc.base.exception.AppException;
 import vn.aeoc.base.service.BaseService;
+import com.github.benmanes.caffeine.cache.Cache;
+import org.springframework.beans.factory.annotation.Qualifier;
 import vn.aeoc.crm.repository.auth.RoleRepository;
+import vn.aeoc.crm.service.cache.CacheKeyFactory;
 import vn.aeoc.entity.data.mysql.auth.Role;
 
-@Slf4j(topic = "ROLE-SERVICE")
 @Service
 public class RoleService extends BaseService<
         RoleRepository,
         Role,
         Integer> {
 
-    protected RoleService(RoleRepository repository, QueryExecutor queryExecutor) {
+    private final Cache<String, Object> authCache;
+
+    protected RoleService(RoleRepository repository, QueryExecutor queryExecutor,
+                          @Qualifier("authCache") Cache<String, Object> authCache) {
         super(repository, queryExecutor);
+        this.authCache = authCache;
     }
 
     public Page<Role> getListRoleByCriteria(Integer id, String name, Integer isDefault,
@@ -33,7 +38,9 @@ public class RoleService extends BaseService<
     }
 
     public Role update(Role role) {
-        return repository.update(role);
+        Role updated = repository.update(role);
+        authCache.invalidate(CacheKeyFactory.authRole(role.getId()));
+        return updated;
     }
 
     public Role getDefaultRole() {
@@ -48,7 +55,19 @@ public class RoleService extends BaseService<
         if (roleId == null || roleId <= 0) {
             return null;
         }
-        return repository.getById(roleId);
+        String cacheKey = CacheKeyFactory.authRole(roleId);
+        Role cached = (Role) authCache.get(cacheKey, key -> copyRole(repository.getById(roleId)));
+        return copyRole(cached);
+    }
+
+    private Role copyRole(Role role) {
+        if (role == null) return null;
+        Role copy = new Role();
+        copy.setId(role.getId());
+        copy.setName(role.getName());
+        copy.setIsDefault(role.getIsDefault());
+        copy.setIsOperator(role.getIsOperator());
+        return copy;
     }
 
     public boolean isOperatorRole(Integer roleId) {
