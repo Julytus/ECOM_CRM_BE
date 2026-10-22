@@ -23,6 +23,7 @@ public class Customer {
     private Integer height;
     private Double weight;
     private Integer userId;      // Người phụ trách khách hàng
+    private Integer accountUserId;
     private String userName;
     private Integer opportunityCount;
 

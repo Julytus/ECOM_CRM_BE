@@ -27,6 +27,8 @@ public class Order {
     private String receiverPhone;
     private Double shippingFee;
     private Integer voucherId;
+    private Integer customerVoucherId;
+    private Double loyaltyVoucherDiscount;
     private String voucherCode;
     private Integer branchId;
     private Integer customerId;
