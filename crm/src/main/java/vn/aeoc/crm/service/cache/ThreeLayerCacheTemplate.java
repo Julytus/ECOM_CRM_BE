@@ -26,7 +26,7 @@ public class ThreeLayerCacheTemplate {
     private final Executor executor;
 
     public ThreeLayerCacheTemplate(
-            Cache<String, Object> l1Cache,
+            @Qualifier("l1CaffeineCache") Cache<String, Object> l1Cache,
             RedisTemplate<String, Object> redisTemplate,
             CacheTemplateProperties properties,
             @Qualifier("cacheLoaderExecutor") Executor executor
