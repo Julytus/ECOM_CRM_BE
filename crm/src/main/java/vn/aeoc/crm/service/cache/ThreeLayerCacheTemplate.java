@@ -1,8 +1,8 @@
 package vn.aeoc.crm.service.cache;
 
 import com.github.benmanes.caffeine.cache.Cache;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Component;
@@ -16,7 +16,6 @@ import java.util.function.Supplier;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class ThreeLayerCacheTemplate {
 
     private static final String LOCK_PREFIX = "cache:lock:";
@@ -24,6 +23,19 @@ public class ThreeLayerCacheTemplate {
     private final Cache<String, Object> l1Cache;
     private final RedisTemplate<String, Object> redisTemplate;
     private final CacheTemplateProperties properties;
+    private final Executor executor;
+
+    public ThreeLayerCacheTemplate(
+            Cache<String, Object> l1Cache,
+            RedisTemplate<String, Object> redisTemplate,
+            CacheTemplateProperties properties,
+            @Qualifier("dbExecutor") Executor executor
+    ) {
+        this.l1Cache = l1Cache;
+        this.redisTemplate = redisTemplate;
+        this.properties = properties;
+        this.executor = executor;
+    }
 
     /**
      * Coalesce concurrent requests in the same JVM instance.
@@ -58,7 +70,7 @@ public class ThreeLayerCacheTemplate {
         }
 
         CompletableFuture<Object> future = inFlight.computeIfAbsent(cacheKey, key ->
-                CompletableFuture.supplyAsync(() -> loadWithDistributedLock(key, redisTtl, dbLoader))
+                CompletableFuture.supplyAsync(() -> loadWithDistributedLock(key, redisTtl, dbLoader), executor)
         );
 
         try {

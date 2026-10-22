@@ -15,9 +15,10 @@ public class AsyncExecutor {
 
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
 
-        executor.setCorePoolSize(8);
-        executor.setMaxPoolSize(32);
-        executor.setQueueCapacity(500);
+        executor.setCorePoolSize(16);
+        executor.setMaxPoolSize(16);
+        executor.setQueueCapacity(100);
+        executor.setAllowCoreThreadTimeOut(true);
 
         executor.setThreadNamePrefix("db-exec-");
 
