@@ -8,6 +8,8 @@ import vn.aeoc.base.util.CommonUtils;
 import vn.entity.backend.tables.InvoiceVoucher;
 import vn.entity.backend.tables.records.InvoiceVoucherRecord;
 
+import java.util.List;
+
 import static vn.entity.backend.tables.InvoiceVoucher.INVOICE_VOUCHER;
 
 @Repository
@@ -56,6 +58,14 @@ public class InvoiceVoucherRepository extends AbsMysqlRepository<InvoiceVoucherR
                 .orderBy(INVOICE_VOUCHER.ID.desc())
                 .limit(1)
                 .fetchOne(INVOICE_VOUCHER.VOUCHER_ID);
+    }
+
+    public List<Integer> findVoucherIdsByInvoice(Integer invoiceId) {
+        return dslContext.select(INVOICE_VOUCHER.VOUCHER_ID)
+                .from(INVOICE_VOUCHER)
+                .where(INVOICE_VOUCHER.INVOICE_ID.eq(invoiceId))
+                .orderBy(INVOICE_VOUCHER.ID.asc())
+                .fetch(INVOICE_VOUCHER.VOUCHER_ID);
     }
 
     public Integer countTotalUsed(Integer voucherId) {

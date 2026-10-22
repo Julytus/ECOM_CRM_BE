@@ -10,6 +10,7 @@ import vn.aeoc.crm.data.constant.PaymentStatus;
 import vn.aeoc.crm.event.InvoicePaidEvent;
 import vn.aeoc.crm.event.InvoiceRefundedEvent;
 import vn.aeoc.crm.repository.sale.CustomerVoucherUsageRepository;
+import vn.aeoc.crm.repository.sale.CustomerVoucherRepository;
 import vn.aeoc.crm.repository.sale.InvoiceRepository;
 import vn.aeoc.crm.repository.sale.InvoiceVoucherRepository;
 import vn.aeoc.crm.repository.sale.OrderRepository;
@@ -27,6 +28,7 @@ class InvoiceServiceLifecycleTest {
     private InvoiceRepository invoiceRepository;
     private InvoiceVoucherRepository invoiceVoucherRepository;
     private CustomerVoucherUsageRepository usageRepository;
+    private CustomerVoucherRepository customerVoucherRepository;
     private OrderRepository orderRepository;
     private PaymentRepository paymentRepository;
     private ApplicationEventPublisher eventPublisher;
@@ -37,10 +39,11 @@ class InvoiceServiceLifecycleTest {
         invoiceRepository = mock(InvoiceRepository.class);
         invoiceVoucherRepository = mock(InvoiceVoucherRepository.class);
         usageRepository = mock(CustomerVoucherUsageRepository.class);
+        customerVoucherRepository = mock(CustomerVoucherRepository.class);
         orderRepository = mock(OrderRepository.class);
         paymentRepository = mock(PaymentRepository.class);
         eventPublisher = mock(ApplicationEventPublisher.class);
-        service = new InvoiceService(invoiceRepository, invoiceVoucherRepository, usageRepository,
+        service = new InvoiceService(invoiceRepository, invoiceVoucherRepository, usageRepository, customerVoucherRepository,
                 new QueryExecutor(Runnable::run), mock(BoughtProductService.class),
                 mock(BoughtServiceItemService.class), mock(ThreeLayerCacheTemplate.class),
                 orderRepository, mock(OrderItemRepository.class), paymentRepository, eventPublisher);
@@ -94,7 +97,7 @@ class InvoiceServiceLifecycleTest {
         when(invoiceRepository.getById(12)).thenReturn(invoice);
         when(invoiceRepository.transitionStatus(eq(12), eq(InvoiceConstant.STATUS_UNPAID),
                 eq(InvoiceConstant.STATUS_CANCEL), anyMap())).thenReturn(1);
-        when(invoiceVoucherRepository.findVoucherIdByInvoice(12)).thenReturn(8);
+        when(invoiceVoucherRepository.findVoucherIdsByInvoice(12)).thenReturn(java.util.List.of(8));
         when(invoiceVoucherRepository.deleteByInvoice(12)).thenReturn(1);
 
         assertEquals(1, service.cancelOrderInvoice(12));
@@ -102,6 +105,24 @@ class InvoiceServiceLifecycleTest {
         verify(orderRepository).updateStatusAndPayment(44, OrderStatus.CANCELLED, PaymentStatus.UNPAID);
         verify(paymentRepository).cancelPendingByInvoice(12);
         verify(usageRepository).decreaseUsage(8, 33);
+        verify(customerVoucherRepository).releaseByInvoice(12);
+    }
+
+    @Test
+    void cancellingUnpaidInvoiceWithBothVouchersDecreasesOnlyRegularVoucherUsage() {
+        Invoice invoice = invoice(InvoiceConstant.STATUS_UNPAID);
+        when(invoiceRepository.getById(12)).thenReturn(invoice);
+        when(invoiceRepository.transitionStatus(eq(12), eq(InvoiceConstant.STATUS_UNPAID),
+                eq(InvoiceConstant.STATUS_CANCEL), anyMap())).thenReturn(1);
+        when(customerVoucherRepository.findVoucherIdByInvoice(12)).thenReturn(99);
+        when(invoiceVoucherRepository.findVoucherIdsByInvoice(12)).thenReturn(java.util.List.of(8, 99));
+        when(invoiceVoucherRepository.deleteByInvoice(12)).thenReturn(2);
+
+        assertEquals(1, service.updateStatus(12, InvoiceConstant.STATUS_CANCEL));
+
+        verify(usageRepository).decreaseUsage(8, 33);
+        verify(usageRepository, never()).decreaseUsage(99, 33);
+        verify(customerVoucherRepository).releaseByInvoice(12);
     }
 
     @Test

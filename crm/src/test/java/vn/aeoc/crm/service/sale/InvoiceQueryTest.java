@@ -6,6 +6,7 @@ import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.util.QueryExecutor;
 import vn.aeoc.crm.data.response.InvoiceResponse;
 import vn.aeoc.crm.repository.sale.CustomerVoucherUsageRepository;
+import vn.aeoc.crm.repository.sale.CustomerVoucherRepository;
 import vn.aeoc.crm.repository.sale.InvoiceRepository;
 import vn.aeoc.crm.repository.sale.InvoiceVoucherRepository;
 import vn.aeoc.crm.repository.sale.OrderItemRepository;
@@ -43,7 +44,7 @@ class InvoiceQueryTest {
         boughtProductService = mock(BoughtProductService.class);
         boughtServiceItemService = mock(BoughtServiceItemService.class);
         service = new InvoiceService(invoiceRepository, mock(InvoiceVoucherRepository.class),
-                mock(CustomerVoucherUsageRepository.class), new QueryExecutor(Runnable::run),
+                mock(CustomerVoucherUsageRepository.class), mock(CustomerVoucherRepository.class), new QueryExecutor(Runnable::run),
                 boughtProductService, boughtServiceItemService, mock(ThreeLayerCacheTemplate.class),
                 orderRepository, orderItemRepository, paymentRepository, mock(org.springframework.context.ApplicationEventPublisher.class));
     }
