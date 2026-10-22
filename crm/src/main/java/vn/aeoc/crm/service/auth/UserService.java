@@ -1,14 +1,15 @@
 package vn.aeoc.crm.service.auth;
 
 import com.google.gson.Gson;
+import com.github.benmanes.caffeine.cache.Cache;
 import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Qualifier;
 import vn.aeoc.base.config.extention.paging.Cursor;
 import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
@@ -22,14 +23,12 @@ import vn.aeoc.crm.repository.customer.CustomerRepository;
 import vn.aeoc.crm.service.RestService;
 import org.springframework.transaction.annotation.Transactional;
 import vn.aeoc.crm.service.cache.CacheKeyFactory;
-import vn.aeoc.crm.service.cache.ThreeLayerCacheTemplate;
 import vn.aeoc.entity.data.mysql.customer.Customer;
 import vn.aeoc.entity.data.mysql.auth.Role;
 import vn.aeoc.entity.data.mysql.auth.User;
 import vn.aeoc.entity.data.response.TokenResponse;
 
 import java.util.List;
-import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
@@ -37,10 +36,7 @@ import static vn.aeoc.crm.util.SecurityUtils.toSimpleSecurityUser;
 
 @Slf4j(topic = "USER-SERVICE")
 @Service
-@RequiredArgsConstructor
 public class UserService {
-    private static final Duration AUTH_CACHE_TTL = Duration.ofSeconds(30);
-
     private final UserRepository userRepository;
     private final PermissionService permissionService;
     private final JWTService jwtService;
@@ -48,19 +44,32 @@ public class UserService {
     private final RestService restService;
     private final RoleService roleService;
     private final CustomerRepository customerRepository;
-    private final ThreeLayerCacheTemplate cacheTemplate;
+    private final Cache<String, Object> authCache;
+
+    public UserService(UserRepository userRepository,
+                       PermissionService permissionService,
+                       JWTService jwtService,
+                       JavaMailSender mailSender,
+                       RestService restService,
+                       RoleService roleService,
+                       CustomerRepository customerRepository,
+                       @Qualifier("authCache") Cache<String, Object> authCache) {
+        this.userRepository = userRepository;
+        this.permissionService = permissionService;
+        this.jwtService = jwtService;
+        this.mailSender = mailSender;
+        this.restService = restService;
+        this.roleService = roleService;
+        this.customerRepository = customerRepository;
+        this.authCache = authCache;
+    }
 
     public User getUserById(Integer userId) {
         if (userId == 0) throw new AppException(ErrorCode.LOGIN);
         String cacheKey = CacheKeyFactory.authUser(userId);
-        try {
-            User cached = cacheTemplate.getOrLoad(cacheKey, AUTH_CACHE_TTL,
-                    () -> copyUser(userRepository.getUserById(userId)));
-            return copyUser(cached);
-        } catch (RuntimeException cacheFailure) {
-            log.warn("Auth user cache unavailable, loading user {} directly", userId, cacheFailure);
-            return copyUser(userRepository.getUserById(userId));
-        }
+        User cached = (User) authCache.get(cacheKey,
+                key -> copyUser(userRepository.getUserById(userId)));
+        return copyUser(cached);
     }
 
     public User checkPermission(Integer userId, String URI, String action) {
@@ -139,11 +148,7 @@ public class UserService {
 
     private void evictAuthUser(Integer userId) {
         if (userId == null) return;
-        try {
-            cacheTemplate.evict(CacheKeyFactory.authUser(userId));
-        } catch (RuntimeException cacheFailure) {
-            log.warn("Could not evict auth user cache for {}", userId, cacheFailure);
-        }
+        authCache.invalidate(CacheKeyFactory.authUser(userId));
     }
 
     @Transactional
@@ -405,6 +410,7 @@ public class UserService {
 
         String otp = CommonUtils.randomNumber(6);
         userRepository.updateOtp(user.getId(), otp);
+        evictAuthUser(user.getId());
 
         sendEmail(email,EmailContent.buildForgotPasswordEmail(user.getName(), otp));
     }
@@ -431,6 +437,7 @@ public class UserService {
         userRepository.updatePass(user);
         evictAuthUser(user.getId());
         userRepository.clearOtp(user.getId());
+        evictAuthUser(user.getId());
     }
 
     public void sendEmail(String email, String content) {

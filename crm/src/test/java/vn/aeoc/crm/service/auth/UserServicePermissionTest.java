@@ -3,6 +3,8 @@ package vn.aeoc.crm.service.auth;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mail.javamail.JavaMailSender;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import vn.aeoc.base.util.QueryExecutor;
 import vn.aeoc.crm.repository.auth.PermissionRepository;
 import vn.aeoc.crm.repository.auth.ResourceRepository;
@@ -13,20 +15,13 @@ import vn.aeoc.crm.controller.BaseController;
 import vn.aeoc.crm.repository.auth.UserRepository;
 import vn.aeoc.crm.service.RestService;
 import vn.aeoc.crm.service.cache.CacheKeyFactory;
-import vn.aeoc.crm.service.cache.ThreeLayerCacheTemplate;
 import vn.aeoc.entity.data.mysql.auth.Role;
 import vn.aeoc.entity.data.mysql.auth.User;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Supplier;
+import java.util.concurrent.atomic.AtomicLong;
 
 class UserServicePermissionTest {
     private UserRepository userRepository;
@@ -35,37 +30,26 @@ class UserServicePermissionTest {
     private UserService userService;
     private RoleRepository roleRepository;
     private PermissionRepository permissionRepository;
-    private ThreeLayerCacheTemplate cacheTemplate;
-    private final Map<String, Object> cache = new HashMap<>();
+    private Cache<String, Object> authCache;
+    private final AtomicLong tickerNanos = new AtomicLong();
 
     @BeforeEach
     void setUp() {
         userRepository = mock(UserRepository.class);
         roleRepository = mock(RoleRepository.class);
         permissionRepository = mock(PermissionRepository.class);
-        cacheTemplate = mock(ThreeLayerCacheTemplate.class);
-        cache.clear();
-        when(cacheTemplate.getOrLoad(anyString(), any(Duration.class), any())).thenAnswer(invocation -> {
-            String key = invocation.getArgument(0);
-            if (!cache.containsKey(key)) {
-                Supplier<?> loader = invocation.getArgument(2);
-                Object loaded = loader.get();
-                if (loaded != null) cache.put(key, loaded);
-            }
-            return cache.get(key);
-        });
-        doAnswer(invocation -> cache.remove(invocation.getArgument(0)))
-                .when(cacheTemplate).evict(anyString());
-        doAnswer(invocation -> {
-            for (String key : (java.util.List<String>) invocation.getArgument(0)) cache.remove(key);
-            return null;
-        }).when(cacheTemplate).evictAll(any());
-        roleService = new RoleService(roleRepository, mock(QueryExecutor.class), cacheTemplate);
+        tickerNanos.set(0L);
+        authCache = Caffeine.newBuilder()
+                .expireAfterWrite(Duration.ofSeconds(30))
+                .maximumSize(10_000)
+                .ticker(tickerNanos::get)
+                .build();
+        roleService = new RoleService(roleRepository, mock(QueryExecutor.class), authCache);
         permissionService = new PermissionService(permissionRepository, mock(ResourceRepository.class),
-                roleRepository, new com.google.gson.Gson(), cacheTemplate);
+                roleRepository, new com.google.gson.Gson(), authCache);
         userService = new UserService(userRepository, permissionService, mock(JWTService.class),
                 mock(JavaMailSender.class), mock(RestService.class), roleService,
-                mock(vn.aeoc.crm.repository.customer.CustomerRepository.class), cacheTemplate);
+                mock(vn.aeoc.crm.repository.customer.CustomerRepository.class), authCache);
         User user = new User();
         user.setId(20);
         user.setRoleId(8);
@@ -128,11 +112,11 @@ class UserServicePermissionTest {
 
         userService.getUserById(20);
         userService.updateUser(updateRequest);
+        assertNull(authCache.getIfPresent(CacheKeyFactory.authUser(20)));
         when(userRepository.getUserById(20)).thenReturn(updated);
         User reloaded = userService.getUserById(20);
 
         assertEquals(9, reloaded.getRoleId());
-        verify(cacheTemplate).evict(CacheKeyFactory.authUser(20));
         verify(userRepository, times(2)).getUserById(20);
     }
 
@@ -143,10 +127,10 @@ class UserServicePermissionTest {
 
         assertEquals(1L, permissionService.checkPermission(8, "/module/", "UPDATE"));
         permissionService.deletePermission(41);
+        assertNull(authCache.getIfPresent(CacheKeyFactory.authPermission(8, "/module/", "UPDATE")));
         assertEquals(0L, permissionService.checkPermission(8, "/module/", "UPDATE"));
 
         verify(permissionRepository, times(2)).checkPermission(8, "/module/", "UPDATE");
-        verify(cacheTemplate).evictAll(java.util.List.of(CacheKeyFactory.authPermission(8, "/module/", "UPDATE")));
     }
 
     @Test
@@ -160,9 +144,9 @@ class UserServicePermissionTest {
 
         userService.getUserById(20);
         userService.updateUserStatus(20, 0);
+        assertNull(authCache.getIfPresent(CacheKeyFactory.authUser(20)));
 
         assertEquals(0, userService.getUserById(20).getActive());
-        verify(cacheTemplate).evict(CacheKeyFactory.authUser(20));
     }
 
     @Test
@@ -175,21 +159,20 @@ class UserServicePermissionTest {
 
         userService.getUserById(20);
         userService.deleteUser(20);
+        assertNull(authCache.getIfPresent(CacheKeyFactory.authUser(20)));
 
         assertNull(userService.getUserById(20).getId());
-        verify(cacheTemplate).evict(CacheKeyFactory.authUser(20));
     }
 
     @Test
-    void redisFailureFallsBackToDirectUserLookup() {
-        User user = new User();
-        user.setId(20);
-        when(userRepository.getUserById(20)).thenReturn(user);
-        doThrow(new IllegalStateException("redis unavailable"))
-                .when(cacheTemplate).getOrLoad(eq(CacheKeyFactory.authUser(20)), eq(Duration.ofSeconds(30)), any());
+    void authCacheExpiresAfterThirtySecondsUsingFakeTicker() {
+        userService.getUserById(20);
+        assertEquals(20, userService.getUserById(20).getId());
+        verify(userRepository, times(1)).getUserById(20);
+
+        tickerNanos.addAndGet(Duration.ofSeconds(30).toNanos() + 1);
 
         assertEquals(20, userService.getUserById(20).getId());
-
-        verify(userRepository, times(1)).getUserById(20);
+        verify(userRepository, times(2)).getUserById(20);
     }
 }

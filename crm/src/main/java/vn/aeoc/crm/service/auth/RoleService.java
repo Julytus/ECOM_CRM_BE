@@ -2,34 +2,30 @@ package vn.aeoc.crm.service.auth;
 
 import vn.aeoc.base.util.QueryExecutor;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
 import vn.aeoc.base.constant.ErrorCode;
 import vn.aeoc.base.exception.AppException;
 import vn.aeoc.base.service.BaseService;
+import com.github.benmanes.caffeine.cache.Cache;
+import org.springframework.beans.factory.annotation.Qualifier;
 import vn.aeoc.crm.repository.auth.RoleRepository;
 import vn.aeoc.crm.service.cache.CacheKeyFactory;
-import vn.aeoc.crm.service.cache.ThreeLayerCacheTemplate;
 import vn.aeoc.entity.data.mysql.auth.Role;
 
-import java.time.Duration;
-
-@Slf4j(topic = "ROLE-SERVICE")
 @Service
 public class RoleService extends BaseService<
         RoleRepository,
         Role,
         Integer> {
 
-    private static final Duration AUTH_CACHE_TTL = Duration.ofSeconds(30);
-    private final ThreeLayerCacheTemplate cacheTemplate;
+    private final Cache<String, Object> authCache;
 
     protected RoleService(RoleRepository repository, QueryExecutor queryExecutor,
-                          ThreeLayerCacheTemplate cacheTemplate) {
+                          @Qualifier("authCache") Cache<String, Object> authCache) {
         super(repository, queryExecutor);
-        this.cacheTemplate = cacheTemplate;
+        this.authCache = authCache;
     }
 
     public Page<Role> getListRoleByCriteria(Integer id, String name, Integer isDefault,
@@ -43,11 +39,7 @@ public class RoleService extends BaseService<
 
     public Role update(Role role) {
         Role updated = repository.update(role);
-        try {
-            cacheTemplate.evict(CacheKeyFactory.authRole(role.getId()));
-        } catch (RuntimeException cacheFailure) {
-            log.warn("Could not evict auth role cache for {}", role.getId(), cacheFailure);
-        }
+        authCache.invalidate(CacheKeyFactory.authRole(role.getId()));
         return updated;
     }
 
@@ -64,14 +56,8 @@ public class RoleService extends BaseService<
             return null;
         }
         String cacheKey = CacheKeyFactory.authRole(roleId);
-        try {
-            Role cached = cacheTemplate.getOrLoad(cacheKey, AUTH_CACHE_TTL,
-                    () -> copyRole(repository.getById(roleId)));
-            return copyRole(cached);
-        } catch (RuntimeException cacheFailure) {
-            log.warn("Auth role cache unavailable, loading role {} directly", roleId, cacheFailure);
-            return copyRole(repository.getById(roleId));
-        }
+        Role cached = (Role) authCache.get(cacheKey, key -> copyRole(repository.getById(roleId)));
+        return copyRole(cached);
     }
 
     private Role copyRole(Role role) {
