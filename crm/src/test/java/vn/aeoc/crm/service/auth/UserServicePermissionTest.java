@@ -26,7 +26,8 @@ class UserServicePermissionTest {
         permissionService = mock(PermissionService.class);
         roleService = mock(RoleService.class);
         userService = new UserService(userRepository, permissionService, mock(JWTService.class),
-                mock(JavaMailSender.class), mock(RestService.class), roleService);
+                mock(JavaMailSender.class), mock(RestService.class), roleService,
+                mock(vn.aeoc.crm.repository.customer.CustomerRepository.class));
         User user = new User();
         user.setId(20);
         user.setRoleId(8);

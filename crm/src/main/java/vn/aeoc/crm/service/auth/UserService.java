@@ -18,7 +18,10 @@ import vn.aeoc.base.util.CommonUtils;
 import vn.aeoc.crm.constant.EmailContent;
 import vn.aeoc.crm.repository.auth.RoleRepository;
 import vn.aeoc.crm.repository.auth.UserRepository;
+import vn.aeoc.crm.repository.customer.CustomerRepository;
 import vn.aeoc.crm.service.RestService;
+import org.springframework.transaction.annotation.Transactional;
+import vn.aeoc.entity.data.mysql.customer.Customer;
 import vn.aeoc.entity.data.mysql.auth.Role;
 import vn.aeoc.entity.data.mysql.auth.User;
 import vn.aeoc.entity.data.response.TokenResponse;
@@ -39,6 +42,7 @@ public class UserService {
     private final JavaMailSender mailSender;
     private final RestService restService;
     private final RoleService roleService;
+    private final CustomerRepository customerRepository;
 
     public User getUserById(Integer userId) {
         if (userId == 0) throw new AppException(ErrorCode.LOGIN);
@@ -70,6 +74,18 @@ public class UserService {
         return user;
     }
 
+    private void createLinkedCustomer(User user) {
+        Customer customer = new Customer();
+        customer.setName(user.getName());
+        customer.setPhone(user.getPhone());
+        customer.setEmail(user.getEmail());
+        customer.setAccountUserId(user.getId());
+        customer.setCreatorId(user.getId());
+        customer.setBranchId(user.getBranchId());
+        customerRepository.insertReturning(customer);
+    }
+
+    @Transactional
     public User register(User user) {
         User userDB = userRepository.getUserByPhone(user.getPhone());
 
@@ -77,6 +93,7 @@ public class UserService {
             throw new AppException(ErrorCode.DUPLICATED_USER);
         }
         User newUser = userRepository.register(user);
+        createLinkedCustomer(newUser);
         newUser.setType("register");
         newUser.setActionType("register");
         newUser.setTime(System.currentTimeMillis());

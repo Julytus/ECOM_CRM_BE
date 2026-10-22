@@ -72,7 +72,7 @@ public class VoucherController extends BaseController {
                 ? voucherService.insert(v)
                 : voucherService.update(v.getId(), v);
 
-        ragService.upsert(result.getId(), RagSyncConstant.VOUCHER);
+//        ragService.upsert(result.getId(), RagSyncConstant.VOUCHER);
         return Mapper.map(result, ApiResponse::okEntity);
     }
 
