@@ -25,6 +25,11 @@ public class Voucher {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    private Long pointsCost;
+    private Integer redeemStock;
+    private Integer minTierId;
+    private Integer redeemedCount;
+
     // JOIN thêm
     private String branchName;
 }
