@@ -9,6 +9,8 @@ import vn.aeoc.crm.data.pojo.ResourceInfo;
 import vn.aeoc.crm.repository.auth.PermissionRepository;
 import vn.aeoc.crm.repository.auth.ResourceRepository;
 import vn.aeoc.crm.repository.auth.RoleRepository;
+import vn.aeoc.crm.service.cache.CacheKeyFactory;
+import vn.aeoc.crm.service.cache.ThreeLayerCacheTemplate;
 import vn.aeoc.entity.data.mysql.auth.Permission;
 import vn.aeoc.entity.data.mysql.auth.Resource;
 import vn.aeoc.entity.data.mysql.auth.Role;
@@ -17,24 +19,35 @@ import vn.aeoc.entity.data.pojo.EBPermissionResource;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.time.Duration;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class PermissionService {
+    private static final Logger log = LoggerFactory.getLogger(PermissionService.class);
+    private static final Duration AUTH_CACHE_TTL = Duration.ofSeconds(30);
     private final PermissionRepository permissionRepository;
     private final ResourceRepository resourceRepository;
     private final RoleRepository roleRepository;
     private final Gson gson;
+    private final ThreeLayerCacheTemplate cacheTemplate;
+    private final Set<String> permissionCacheKeys = ConcurrentHashMap.newKeySet();
 
     public PermissionService(
             PermissionRepository permissionRepository,
             ResourceRepository resourceRepository,
             RoleRepository roleRepository,
-            Gson gson
+            Gson gson,
+            ThreeLayerCacheTemplate cacheTemplate
     ) {
         this.permissionRepository = permissionRepository;
         this.resourceRepository = resourceRepository;
         this.roleRepository = roleRepository;
         this.gson = gson;
+        this.cacheTemplate = cacheTemplate;
     }
 
     public List<Permission> getPermissionByCriteria(Integer objectId) {
@@ -46,19 +59,27 @@ public class PermissionService {
     }
 
     public Permission insertPermission(Permission permission) {
-        return permissionRepository.insertPermission(permission);
+        Permission inserted = permissionRepository.insertPermission(permission);
+        evictCheckPermissionCache();
+        return inserted;
     }
 
     public List<Permission> insertBatchPermission(List<Permission> lstPermission) {
-        return permissionRepository.insertBatchPermission(lstPermission);
+        List<Permission> inserted = permissionRepository.insertBatchPermission(lstPermission);
+        if (lstPermission != null && !lstPermission.isEmpty()) evictCheckPermissionCache();
+        return inserted;
     }
 
     public Permission updatePermission(Permission permission) {
-        return permissionRepository.updatePermission(permission);
+        Permission updated = permissionRepository.updatePermission(permission);
+        evictCheckPermissionCache();
+        return updated;
     }
 
     public Integer deletePermission(Integer id) {
-        return permissionRepository.deletePermission(id);
+        Integer deleted = permissionRepository.deletePermission(id);
+        if (deleted != null && deleted > 0) evictCheckPermissionCache();
+        return deleted;
     }
 
     public List<EBPermissionResource> getPermissionResources(Integer roleId) {
@@ -70,7 +91,30 @@ public class PermissionService {
     }
 
     public long checkPermission(Integer roleId, String uri, String action) {
-        return permissionRepository.checkPermission(roleId, uri, action);
+        String cacheKey = CacheKeyFactory.authPermission(roleId, uri, action);
+        permissionCacheKeys.add(cacheKey);
+        try {
+            Long count = cacheTemplate.getOrLoad(cacheKey, AUTH_CACHE_TTL,
+                    () -> permissionRepository.checkPermission(roleId, uri, action));
+            return count == null ? 0L : count;
+        } catch (RuntimeException cacheFailure) {
+            log.warn("Auth permission cache unavailable, loading permission directly", cacheFailure);
+            Long count = permissionRepository.checkPermission(roleId, uri, action);
+            return count == null ? 0L : count;
+        }
+    }
+
+    /** Evict all permission decisions observed by this instance after a resource URI/action change. */
+    public void evictCheckPermissionCache() {
+        if (permissionCacheKeys.isEmpty()) return;
+        List<String> keys = List.copyOf(permissionCacheKeys);
+        permissionCacheKeys.removeAll(keys);
+        try {
+            cacheTemplate.evictAll(keys);
+        } catch (RuntimeException cacheFailure) {
+            // evictAll invalidates L1 before talking to Redis; other instances expire within the TTL.
+            log.warn("Could not fully evict auth permission cache", cacheFailure);
+        }
     }
 
     /**
@@ -82,7 +126,9 @@ public class PermissionService {
 
         if (permissionDb == null) {
             if ("ADD".equals(action)) {
-                return permissionRepository.insertPermission(permission);
+                Permission inserted = permissionRepository.insertPermission(permission);
+                evictCheckPermissionCache();
+                return inserted;
             }
             return permission;
         }
@@ -101,7 +147,9 @@ public class PermissionService {
         }
 
         permissionDb.setActions(gson.toJson(new ArrayList<>(resultSet)));
-        return permissionRepository.updatePermission(permissionDb);
+        Permission updated = permissionRepository.updatePermission(permissionDb);
+        evictCheckPermissionCache();
+        return updated;
     }
 
     public List<ResourceInfo> getResourceInfo(Integer roleId, String name) {

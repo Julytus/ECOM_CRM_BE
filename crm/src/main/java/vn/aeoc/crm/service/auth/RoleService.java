@@ -10,7 +10,11 @@ import vn.aeoc.base.constant.ErrorCode;
 import vn.aeoc.base.exception.AppException;
 import vn.aeoc.base.service.BaseService;
 import vn.aeoc.crm.repository.auth.RoleRepository;
+import vn.aeoc.crm.service.cache.CacheKeyFactory;
+import vn.aeoc.crm.service.cache.ThreeLayerCacheTemplate;
 import vn.aeoc.entity.data.mysql.auth.Role;
+
+import java.time.Duration;
 
 @Slf4j(topic = "ROLE-SERVICE")
 @Service
@@ -19,8 +23,13 @@ public class RoleService extends BaseService<
         Role,
         Integer> {
 
-    protected RoleService(RoleRepository repository, QueryExecutor queryExecutor) {
+    private static final Duration AUTH_CACHE_TTL = Duration.ofSeconds(30);
+    private final ThreeLayerCacheTemplate cacheTemplate;
+
+    protected RoleService(RoleRepository repository, QueryExecutor queryExecutor,
+                          ThreeLayerCacheTemplate cacheTemplate) {
         super(repository, queryExecutor);
+        this.cacheTemplate = cacheTemplate;
     }
 
     public Page<Role> getListRoleByCriteria(Integer id, String name, Integer isDefault,
@@ -33,7 +42,13 @@ public class RoleService extends BaseService<
     }
 
     public Role update(Role role) {
-        return repository.update(role);
+        Role updated = repository.update(role);
+        try {
+            cacheTemplate.evict(CacheKeyFactory.authRole(role.getId()));
+        } catch (RuntimeException cacheFailure) {
+            log.warn("Could not evict auth role cache for {}", role.getId(), cacheFailure);
+        }
+        return updated;
     }
 
     public Role getDefaultRole() {
@@ -48,7 +63,25 @@ public class RoleService extends BaseService<
         if (roleId == null || roleId <= 0) {
             return null;
         }
-        return repository.getById(roleId);
+        String cacheKey = CacheKeyFactory.authRole(roleId);
+        try {
+            Role cached = cacheTemplate.getOrLoad(cacheKey, AUTH_CACHE_TTL,
+                    () -> copyRole(repository.getById(roleId)));
+            return copyRole(cached);
+        } catch (RuntimeException cacheFailure) {
+            log.warn("Auth role cache unavailable, loading role {} directly", roleId, cacheFailure);
+            return copyRole(repository.getById(roleId));
+        }
+    }
+
+    private Role copyRole(Role role) {
+        if (role == null) return null;
+        Role copy = new Role();
+        copy.setId(role.getId());
+        copy.setName(role.getName());
+        copy.setIsDefault(role.getIsDefault());
+        copy.setIsOperator(role.getIsOperator());
+        return copy;
     }
 
     public boolean isOperatorRole(Integer roleId) {

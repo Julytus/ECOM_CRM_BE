@@ -93,4 +93,16 @@ public final class CacheKeyFactory {
     public static String dashboardRevenueVersion(Integer branchId) {
         return "dashboard:revenue:version:branch:" + branchId;
     }
+
+    public static String authUser(Integer userId) {
+        return "auth:user:" + userId;
+    }
+
+    public static String authRole(Integer roleId) {
+        return "auth:role:" + roleId;
+    }
+
+    public static String authPermission(Integer roleId, String uri, String action) {
+        return "auth:permission:role:" + roleId + ":uri:" + uri + ":action:" + action;
+    }
 }
