@@ -2,9 +2,12 @@ package vn.aeoc.crm.util;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.core.task.TaskExecutor;
+import vn.aeoc.base.config.async.AsyncExecutor;
 import vn.aeoc.base.util.QueryExecutor;
 import vn.aeoc.crm.config.cache.CacheTemplateProperties;
 import vn.aeoc.crm.service.cache.ThreeLayerCacheTemplate;
@@ -19,10 +22,19 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 class QueryExecutorThreadTest {
+
+    @Test
+    void dbExecutorIsPrimaryTaskExecutor() {
+        try (AnnotationConfigApplicationContext context =
+                     new AnnotationConfigApplicationContext(AsyncExecutor.class)) {
+            assertSame(context.getBean("dbExecutor"), context.getBean(TaskExecutor.class));
+        }
+    }
 
     @Test
     void parallel3To5RunSuppliersOnDbExecutor() {

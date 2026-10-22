@@ -2,6 +2,7 @@ package vn.aeoc.base.config.async;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.Executor;
@@ -23,6 +24,7 @@ public class AsyncExecutor {
     }
 
     @Bean("dbExecutor")
+    @Primary
     public Executor dbExecutor() {
 
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
