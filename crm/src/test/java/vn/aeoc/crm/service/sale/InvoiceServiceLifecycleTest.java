@@ -8,6 +8,7 @@ import vn.aeoc.crm.constant.InvoiceConstant;
 import vn.aeoc.crm.data.constant.OrderStatus;
 import vn.aeoc.crm.data.constant.PaymentStatus;
 import vn.aeoc.crm.event.InvoicePaidEvent;
+import vn.aeoc.crm.event.InvoiceRefundedEvent;
 import vn.aeoc.crm.repository.sale.CustomerVoucherUsageRepository;
 import vn.aeoc.crm.repository.sale.InvoiceRepository;
 import vn.aeoc.crm.repository.sale.InvoiceVoucherRepository;
@@ -115,6 +116,7 @@ class InvoiceServiceLifecycleTest {
 
         verify(orderRepository).updateStatusAndPayment(44, OrderStatus.REFUNDED, PaymentStatus.REFUNDED);
         verify(paymentRepository).markStatusByInvoice(12, "REFUNDED");
+        verify(eventPublisher).publishEvent(new InvoiceRefundedEvent(12, 44, 33));
     }
 
     private Invoice invoice(int status) {
