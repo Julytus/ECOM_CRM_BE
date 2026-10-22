@@ -10,7 +10,13 @@ import vn.aeoc.crm.config.cache.CacheTemplateProperties;
 import vn.aeoc.crm.service.cache.ThreeLayerCacheTemplate;
 
 import java.time.Duration;
-import java.util.concurrent.Executor;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.*;
@@ -50,8 +56,8 @@ class QueryExecutorThreadTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void cacheLoaderRunsOnInjectedDbExecutor() {
-        ThreadPoolTaskExecutor executor = newExecutor();
+    void cacheLoaderRunsOnInjectedCacheLoaderExecutor() {
+        ThreadPoolTaskExecutor executor = newExecutor("test-cache-load-");
         try {
             Cache<String, Object> l1Cache = mock(Cache.class);
             RedisTemplate<String, Object> redisTemplate = mock(RedisTemplate.class);
@@ -66,18 +72,76 @@ class QueryExecutorThreadTest {
                     l1Cache, redisTemplate, properties, executor);
             String loaded = cache.getOrLoad("cache-key", this::threadName);
 
-            assertDbThread(loaded);
+            assertTrue(loaded.startsWith("test-cache-load-"),
+                    () -> "Expected cache loader thread, got: " + loaded);
         } finally {
             executor.shutdown();
         }
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    void concurrentCacheLoadersCanUseDbExecutorWithoutDeadlock() throws Exception {
+        ThreadPoolTaskExecutor dbExecutor = newExecutor();
+        ThreadPoolTaskExecutor cacheLoaderExecutor = newExecutor("test-cache-load-");
+        ExecutorService callers = Executors.newFixedThreadPool(16);
+        try {
+            Cache<String, Object> l1Cache = mock(Cache.class);
+            RedisTemplate<String, Object> redisTemplate = mock(RedisTemplate.class);
+            ValueOperations<String, Object> valueOperations = mock(ValueOperations.class);
+            when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+            when(valueOperations.get(anyString())).thenReturn(null);
+            when(valueOperations.setIfAbsent(anyString(), eq("1"), any(Duration.class)))
+                    .thenReturn(true);
+
+            QueryExecutor queryExecutor = new QueryExecutor(dbExecutor);
+            ThreeLayerCacheTemplate cache = new ThreeLayerCacheTemplate(
+                    l1Cache, redisTemplate, new CacheTemplateProperties(), cacheLoaderExecutor);
+            CountDownLatch allLoadersStarted = new CountDownLatch(16);
+            List<Future<String>> results = new ArrayList<>();
+
+            for (int i = 0; i < 16; i++) {
+                String cacheKey = "cache-key-" + i;
+                results.add(callers.submit(() -> cache.getOrLoad(cacheKey, () -> {
+                    allLoadersStarted.countDown();
+                    try {
+                        assertTrue(allLoadersStarted.await(3, TimeUnit.SECONDS),
+                                "All 16 cache loaders should start concurrently");
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new IllegalStateException(e);
+                    }
+                    var queryThreads = queryExecutor.parallel2(this::threadName, this::threadName);
+                    return queryThreads.v1() + "," + queryThreads.v2();
+                })));
+            }
+
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
+            for (Future<String> result : results) {
+                long remaining = deadline - System.nanoTime();
+                assertTrue(remaining > 0, "Cache loads and nested queries should finish within 3 seconds");
+                String queryThreads = result.get(remaining, TimeUnit.NANOSECONDS);
+                for (String threadName : queryThreads.split(",")) {
+                    assertDbThread(threadName);
+                }
+            }
+        } finally {
+            callers.shutdownNow();
+            cacheLoaderExecutor.shutdown();
+            dbExecutor.shutdown();
+        }
+    }
+
     private ThreadPoolTaskExecutor newExecutor() {
+        return newExecutor("test-db-");
+    }
+
+    private ThreadPoolTaskExecutor newExecutor(String threadNamePrefix) {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(2);
-        executor.setMaxPoolSize(2);
-        executor.setQueueCapacity(10);
-        executor.setThreadNamePrefix("test-db-");
+        executor.setCorePoolSize(16);
+        executor.setMaxPoolSize(16);
+        executor.setQueueCapacity(50);
+        executor.setThreadNamePrefix(threadNamePrefix);
         executor.initialize();
         return executor;
     }

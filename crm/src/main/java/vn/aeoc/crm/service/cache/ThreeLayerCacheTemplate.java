@@ -29,7 +29,7 @@ public class ThreeLayerCacheTemplate {
             Cache<String, Object> l1Cache,
             RedisTemplate<String, Object> redisTemplate,
             CacheTemplateProperties properties,
-            @Qualifier("dbExecutor") Executor executor
+            @Qualifier("cacheLoaderExecutor") Executor executor
     ) {
         this.l1Cache = l1Cache;
         this.redisTemplate = redisTemplate;
