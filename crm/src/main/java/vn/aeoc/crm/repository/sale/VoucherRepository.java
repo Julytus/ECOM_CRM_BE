@@ -15,6 +15,7 @@ import vn.aeoc.entity.data.mysql.sale.Voucher;
 import vn.entity.backend.tables.records.VoucherRecord;
 
 import java.util.List;
+import java.time.LocalDateTime;
 
 import static vn.entity.backend.tables.Branch.BRANCH;
 import static vn.entity.backend.tables.InvoiceVoucher.INVOICE_VOUCHER;
@@ -72,6 +73,26 @@ public class VoucherRepository extends AbsMysqlRepository<VoucherRecord, Voucher
                 .where(VOUCHER.CODE.eq(code))
                 .forUpdate()
                 .fetchOneInto(Voucher.class);
+    }
+
+    public List<Voucher> findRedeemable() {
+        LocalDateTime now = LocalDateTime.now();
+        return dslContext.selectFrom(VOUCHER)
+                .where(VOUCHER.STATUS.eq(1)
+                        .and(VOUCHER.POINTS_COST.isNotNull())
+                        .and(VOUCHER.START_DATE.isNull().or(VOUCHER.START_DATE.le(now)))
+                        .and(VOUCHER.END_DATE.isNull().or(VOUCHER.END_DATE.ge(now)))
+                        .and(VOUCHER.REDEEM_STOCK.isNull().or(VOUCHER.REDEEMED_COUNT.lt(VOUCHER.REDEEM_STOCK))))
+                .orderBy(VOUCHER.ID.desc())
+                .fetchInto(Voucher.class);
+    }
+
+    public Integer increaseRedeemedIfInStock(Integer voucherId) {
+        return dslContext.update(VOUCHER)
+                .set(VOUCHER.REDEEMED_COUNT, VOUCHER.REDEEMED_COUNT.plus(1))
+                .where(VOUCHER.ID.eq(voucherId)
+                        .and(VOUCHER.REDEEM_STOCK.isNull().or(VOUCHER.REDEEMED_COUNT.lt(VOUCHER.REDEEM_STOCK))))
+                .execute();
     }
 
     public Boolean existByCode(String code) {
