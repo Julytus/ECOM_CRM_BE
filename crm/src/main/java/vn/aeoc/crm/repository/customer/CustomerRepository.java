@@ -166,4 +166,11 @@ public class CustomerRepository
         );
     }
 
+    public Integer findAccountUserIdById(Integer customerId) {
+        return dslContext.select(CUSTOMER.ACCOUNT_USER_ID)
+                .from(CUSTOMER)
+                .where(CUSTOMER.ID.eq(customerId))
+                .fetchOne(CUSTOMER.ACCOUNT_USER_ID);
+    }
+
 }

@@ -17,6 +17,7 @@ import vn.aeoc.crm.data.response.InvoiceResponse;
 import vn.aeoc.crm.data.constant.OrderStatus;
 import vn.aeoc.crm.data.constant.PaymentStatus;
 import vn.aeoc.crm.event.InvoicePaidEvent;
+import vn.aeoc.crm.event.InvoiceRefundedEvent;
 import vn.aeoc.crm.repository.sale.CustomerVoucherUsageRepository;
 import vn.aeoc.crm.repository.sale.InvoiceRepository;
 import vn.aeoc.crm.repository.sale.InvoiceVoucherRepository;
@@ -296,6 +297,7 @@ public class InvoiceService extends BaseService<InvoiceRepository, Invoice, Inte
         }
         paymentRepository.markStatusByInvoice(invoiceId, "REFUNDED");
         bumpDashboardRevenueVersion(invoice.getBranchId());
+        eventPublisher.publishEvent(new InvoiceRefundedEvent(invoiceId, invoice.getOrderId(), invoice.getCustomerId()));
         return updated;
     }
 

@@ -4,6 +4,7 @@ import vn.aeoc.base.util.QueryExecutor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 import vn.aeoc.base.config.extention.paging.Page;
 import vn.aeoc.base.config.extention.paging.Pageable;
@@ -21,6 +22,7 @@ import vn.aeoc.crm.repository.sale.InvoiceRepository;
 import vn.aeoc.crm.repository.sale.PaymentRepository;
 import vn.aeoc.crm.data.constant.OrderStatus;
 import vn.aeoc.crm.constant.InvoiceConstant;
+import vn.aeoc.crm.event.OrderCompletedEvent;
 import vn.aeoc.entity.data.mysql.sale.Invoice;
 import vn.aeoc.entity.data.mysql.sale.Payment;
 import vn.aeoc.entity.data.mysql.sale.Order;
@@ -40,16 +42,19 @@ public class OrderService extends BaseService<OrderRepository, Order, Integer> {
     private final InvoiceRepository invoiceRepository;
     private final PaymentRepository paymentRepository;
     private final InvoiceService invoiceService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public OrderService(OrderRepository repository, OrderItemRepository orderItemRepository, OrderItemService orderItemService,
                         InvoiceRepository invoiceRepository, PaymentRepository paymentRepository,
-                        InvoiceService invoiceService, QueryExecutor queryExecutor) {
+                        InvoiceService invoiceService, QueryExecutor queryExecutor,
+                        ApplicationEventPublisher eventPublisher) {
         super(repository, queryExecutor);
         this.orderItemRepository = orderItemRepository;
         this.orderItemService = orderItemService;
         this.invoiceRepository = invoiceRepository;
         this.paymentRepository = paymentRepository;
         this.invoiceService = invoiceService;
+        this.eventPublisher = eventPublisher;
     }
 
     public Page<Order> getByCriteria(
@@ -136,7 +141,13 @@ public class OrderService extends BaseService<OrderRepository, Order, Integer> {
         }
         String paymentStatus = OrderStatus.COMPLETED.equals(to) && "COD".equalsIgnoreCase(invoice.getPaymentMethod())
                 ? vn.aeoc.crm.data.constant.PaymentStatus.PAID : order.getPaymentStatus();
-        repository.updateStatusAndPayment(orderId, to, paymentStatus);
+        int updated = repository.updateStatusAndPayment(orderId, to, paymentStatus);
+        if (updated > 0 && OrderStatus.COMPLETED.equals(to)) {
+            double totalAmount = order.getTotalAmount() == null ? 0D : order.getTotalAmount();
+            double discountAmount = order.getDiscountAmount() == null ? 0D : order.getDiscountAmount();
+            eventPublisher.publishEvent(new OrderCompletedEvent(order.getId(), order.getCustomerId(),
+                    totalAmount - discountAmount));
+        }
     }
 
     public void updateStatus(Integer id, Order o) {
