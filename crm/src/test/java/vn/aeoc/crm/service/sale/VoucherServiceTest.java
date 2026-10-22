@@ -88,6 +88,35 @@ class VoucherServiceTest {
         assertThrows(AppException.class, () -> service.evaluateRedeemed(3, 100D, 7));
     }
 
+    @Test
+    void voucherInsertRejectsNonPositivePointsCost() {
+        VoucherRepository voucherRepository = mock(VoucherRepository.class);
+        VoucherService service = new VoucherService(voucherRepository, new QueryExecutor(Runnable::run),
+                mock(InvoiceService.class), mock(InvoiceVoucherRepository.class),
+                mock(CustomerVoucherUsageRepository.class));
+        Voucher voucher = voucher(1, 10D, null, null, null);
+        voucher.setCode("POINTS");
+        voucher.setPointsCost(0L);
+
+        assertThrows(AppException.class, () -> service.insert(voucher));
+    }
+
+    @Test
+    void voucherUpdateCannotReduceRedeemStockBelowRedeemedCount() {
+        VoucherRepository voucherRepository = mock(VoucherRepository.class);
+        Voucher current = voucher(1, 10D, null, null, null);
+        current.setRedeemedCount(5);
+        when(voucherRepository.getById(3)).thenReturn(current);
+        VoucherService service = new VoucherService(voucherRepository, new QueryExecutor(Runnable::run),
+                mock(InvoiceService.class), mock(InvoiceVoucherRepository.class),
+                mock(CustomerVoucherUsageRepository.class));
+        Voucher update = voucher(1, 10D, null, null, null);
+        update.setCode("POINTS");
+        update.setRedeemStock(4);
+
+        assertThrows(AppException.class, () -> service.update(3, update));
+    }
+
     private VoucherService serviceWithVoucher(Voucher voucher, int used) {
         VoucherRepository voucherRepository = mock(VoucherRepository.class);
         InvoiceService invoiceService = mock(InvoiceService.class);

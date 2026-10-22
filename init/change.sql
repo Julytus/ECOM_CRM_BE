@@ -158,3 +158,7 @@ ALTER TABLE `order`
 -- DROP TABLE `loyalty_config`;
 -- DROP TABLE `loyalty_tier`;
 
+INSERT INTO `resource` (`name`, `description`, `code`, `uri`, `actions`, `active`, `module_id`)
+VALUES ('Quản lý loyalty', 'Quản lý hạng, điểm và tài khoản loyalty', 'LOYALTY', '/loyalty/',
+        '["VIEW", "ADD", "UPDATE", "DELETE"]', 1, 1);
+

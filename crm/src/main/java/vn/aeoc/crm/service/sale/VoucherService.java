@@ -50,14 +50,32 @@ public class VoucherService extends BaseService<VoucherRepository, Voucher, Inte
     @Override
     public Voucher insert(Voucher voucher) {
         if (repository.existByCode(voucher.getCode())) throw new AppException(ErrorCode.EXIST_VOUCHER);
+        validateLoyaltyFields(voucher);
         return super.insert(voucher);
     }
 
     @Override
     public Voucher update(Integer id , Voucher voucher) {
         if (repository.existByCodeExceptVoucherId(id, voucher.getCode())) throw new AppException(ErrorCode.EXIST_VOUCHER);
+        validateLoyaltyFields(voucher);
+        Voucher current = repository.getById(id);
+        if (current == null) throw new AppException("Voucher không tồn tại");
+        if (voucher.getRedeemStock() != null && voucher.getRedeemStock() < value(current.getRedeemedCount())) {
+            throw new AppException("Số lượng đổi không thể nhỏ hơn số voucher đã đổi");
+        }
         return super.update(id, voucher);
     }
+
+    private void validateLoyaltyFields(Voucher voucher) {
+        if (voucher.getPointsCost() != null && voucher.getPointsCost() <= 0) {
+            throw new AppException("pointsCost phải lớn hơn 0");
+        }
+        if (voucher.getRedeemStock() != null && voucher.getRedeemStock() < 0) {
+            throw new AppException("redeemStock không hợp lệ");
+        }
+    }
+
+    private int value(Integer value) { return value == null ? 0 : value; }
 
     public Voucher getByCode(String code) {
         return repository.getByCode(code);
