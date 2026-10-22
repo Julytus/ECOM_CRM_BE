@@ -90,12 +90,21 @@ public class VoucherService extends BaseService<VoucherRepository, Voucher, Inte
         return evaluate(voucher, amount, branchId, customerId);
     }
 
+    public VoucherEvaluation evaluateRedeemed(Integer voucherId, double amount, Integer branchId) {
+        Voucher voucher = repository.getById(voucherId);
+        Invoice invoice = new Invoice();
+        invoice.setAmount(amount);
+        invoice.setBranchId(branchId);
+        validateVoucher(invoice, voucher, false);
+        return new VoucherEvaluation(voucher, calculateDiscount(amount, voucher));
+    }
+
     private VoucherEvaluation evaluate(Voucher voucher, Double amount, Integer branchId, Integer customerId) {
         Invoice invoice = new Invoice();
         invoice.setAmount(amount);
         invoice.setBranchId(branchId);
         invoice.setCustomerId(customerId);
-        validateVoucher(invoice, voucher);
+        validateVoucher(invoice, voucher, true);
         return new VoucherEvaluation(voucher, calculateDiscount(amount, voucher));
     }
 
@@ -141,7 +150,8 @@ public class VoucherService extends BaseService<VoucherRepository, Voucher, Inte
     }
     private void validateVoucher(
             Invoice invoice,
-            Voucher voucher
+            Voucher voucher,
+            boolean checkUsageLimits
     ) {
         if (voucher == null) {
             throw new AppException("Voucher không tồn tại");
@@ -178,25 +188,24 @@ public class VoucherService extends BaseService<VoucherRepository, Voucher, Inte
             );
         }
 
-        // 5. Giới hạn tổng lượt sử dụng (toàn hệ thống)
-        Integer totalUsedCount = invoiceVoucherRepository.countTotalUsed((voucher.getId()));
-        if (voucher.getTotalQuantity() != null && voucher.getTotalQuantity() > 0) {
-            if (totalUsedCount >= voucher.getTotalQuantity()) {
-                throw new AppException("Voucher đã hết lượt sử dụng");
+        if (checkUsageLimits) {
+            // 5. Giới hạn tổng lượt sử dụng (toàn hệ thống)
+            Integer totalUsedCount = invoiceVoucherRepository.countTotalUsed(voucher.getId());
+            if (voucher.getTotalQuantity() != null && voucher.getTotalQuantity() > 0) {
+                if (totalUsedCount >= voucher.getTotalQuantity()) {
+                    throw new AppException("Voucher đã hết lượt sử dụng");
+                }
             }
-        }
 
-        // 6. Giới hạn lượt sử dụng theo customer, khách vãng lai không cần check
-        if (invoice.getCustomerId() != null && invoice.getCustomerId() > 0) {
-            Integer customerUsedCount =
-                    customerVoucherUsageRepository.getUsedCount(
-                            voucher.getId(),
-                            invoice.getCustomerId()
-                    );
+            // 6. Giới hạn lượt sử dụng theo customer, khách vãng lai không cần check
+            if (invoice.getCustomerId() != null && invoice.getCustomerId() > 0) {
+                Integer customerUsedCount = customerVoucherUsageRepository.getUsedCount(
+                        voucher.getId(), invoice.getCustomerId());
 
-            if (voucher.getPerUserLimit() != null && voucher.getPerUserLimit() > 0) {
-                if (customerUsedCount >= voucher.getPerUserLimit()) {
-                    throw new AppException("Khách hàng đã quá số lần sử dụng voucher này");
+                if (voucher.getPerUserLimit() != null && voucher.getPerUserLimit() > 0) {
+                    if (customerUsedCount >= voucher.getPerUserLimit()) {
+                        throw new AppException("Khách hàng đã quá số lần sử dụng voucher này");
+                    }
                 }
             }
         }

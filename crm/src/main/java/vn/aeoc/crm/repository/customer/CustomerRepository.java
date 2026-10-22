@@ -173,4 +173,11 @@ public class CustomerRepository
                 .fetchOne(CUSTOMER.ACCOUNT_USER_ID);
     }
 
+    public Integer findCustomerIdByAccountUserId(Integer accountUserId) {
+        return dslContext.select(CUSTOMER.ID)
+                .from(CUSTOMER)
+                .where(CUSTOMER.ACCOUNT_USER_ID.eq(accountUserId))
+                .fetchOne(CUSTOMER.ID);
+    }
+
 }

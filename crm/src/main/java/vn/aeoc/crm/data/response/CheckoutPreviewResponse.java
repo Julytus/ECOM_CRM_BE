@@ -5,5 +5,7 @@ public record CheckoutPreviewResponse(
         double discount,
         double shippingFee,
         double finalAmount,
-        String voucherCode
+        String voucherCode,
+        double loyaltyDiscount,
+        Long customerVoucherId
 ) {}

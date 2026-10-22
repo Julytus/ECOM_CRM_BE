@@ -168,6 +168,8 @@ public class OrderRepository
                 .set(ORDER.RECEIVER_PHONE, order.getReceiverPhone())
                 .set(ORDER.SHIPPING_FEE, order.getShippingFee())
                 .set(ORDER.VOUCHER_ID, order.getVoucherId())
+                .set(ORDER.CUSTOMER_VOUCHER_ID, order.getCustomerVoucherId())
+                .set(ORDER.LOYALTY_VOUCHER_DISCOUNT, order.getLoyaltyVoucherDiscount())
                 .set(ORDER.VOUCHER_CODE, order.getVoucherCode())
                 .set(ORDER.BRANCH_ID, order.getBranchId())
                 .set(ORDER.CUSTOMER_ID, order.getCustomerId())

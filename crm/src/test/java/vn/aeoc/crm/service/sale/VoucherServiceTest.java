@@ -60,6 +60,34 @@ class VoucherServiceTest {
         verify(usageRepository, never()).getUsedCount(anyInt(), anyInt());
     }
 
+    @Test
+    void evaluateRedeemedVoucherKeepsEligibilityChecksButSkipsUsageLimits() {
+        Voucher redeemed = voucher(2, 25D, null, 50D, 1);
+        VoucherRepository voucherRepository = mock(VoucherRepository.class);
+        InvoiceVoucherRepository invoiceVoucherRepository = mock(InvoiceVoucherRepository.class);
+        CustomerVoucherUsageRepository usageRepository = mock(CustomerVoucherUsageRepository.class);
+        VoucherService service = new VoucherService(voucherRepository, new QueryExecutor(Runnable::run),
+                mock(InvoiceService.class), invoiceVoucherRepository, usageRepository);
+        when(voucherRepository.getById(3)).thenReturn(redeemed);
+
+        assertEquals(25D, service.evaluateRedeemed(3, 100D, 7).discount());
+
+        verifyNoInteractions(invoiceVoucherRepository, usageRepository);
+    }
+
+    @Test
+    void evaluateRedeemedVoucherStillRejectsDisabledOrIneligibleVoucher() {
+        Voucher disabled = voucher(1, 10D, null, null, null);
+        disabled.setStatus(0);
+        VoucherRepository voucherRepository = mock(VoucherRepository.class);
+        VoucherService service = new VoucherService(voucherRepository, new QueryExecutor(Runnable::run),
+                mock(InvoiceService.class), mock(InvoiceVoucherRepository.class),
+                mock(CustomerVoucherUsageRepository.class));
+        when(voucherRepository.getById(3)).thenReturn(disabled);
+
+        assertThrows(AppException.class, () -> service.evaluateRedeemed(3, 100D, 7));
+    }
+
     private VoucherService serviceWithVoucher(Voucher voucher, int used) {
         VoucherRepository voucherRepository = mock(VoucherRepository.class);
         InvoiceService invoiceService = mock(InvoiceService.class);

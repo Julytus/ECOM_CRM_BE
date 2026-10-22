@@ -22,8 +22,9 @@ public class CheckoutController {
     }
 
     @PostMapping("/checkout/preview")
-    public ResponseEntity<ApiResponse<CheckoutPreviewResponse>> preview(@RequestBody CheckoutRequest request) {
-        return ResponseEntity.ok(ApiResponse.ok(checkoutService.preview(request)));
+    public ResponseEntity<ApiResponse<CheckoutPreviewResponse>> preview(@RequestBody CheckoutRequest request, Principal principal) {
+        Integer userId = SecurityUtils.userId(principal);
+        return ResponseEntity.ok(ApiResponse.ok(checkoutService.preview(request, userId)));
     }
 
     @PostMapping("/checkout/submit")

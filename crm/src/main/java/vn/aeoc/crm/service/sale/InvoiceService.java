@@ -19,6 +19,7 @@ import vn.aeoc.crm.data.constant.PaymentStatus;
 import vn.aeoc.crm.event.InvoicePaidEvent;
 import vn.aeoc.crm.event.InvoiceRefundedEvent;
 import vn.aeoc.crm.repository.sale.CustomerVoucherUsageRepository;
+import vn.aeoc.crm.repository.sale.CustomerVoucherRepository;
 import vn.aeoc.crm.repository.sale.InvoiceRepository;
 import vn.aeoc.crm.repository.sale.InvoiceVoucherRepository;
 import vn.aeoc.crm.repository.sale.OrderRepository;
@@ -54,6 +55,7 @@ public class InvoiceService extends BaseService<InvoiceRepository, Invoice, Inte
 
     private final InvoiceVoucherRepository invoiceVoucherRepository;
     private final CustomerVoucherUsageRepository customerVoucherUsageRepository;
+    private final CustomerVoucherRepository customerVoucherRepository;
     private final QueryExecutor queryExecutor;
     private final BoughtProductService boughtProductService;
     private final BoughtServiceItemService boughtServiceItemService;
@@ -67,6 +69,7 @@ public class InvoiceService extends BaseService<InvoiceRepository, Invoice, Inte
 
     protected InvoiceService(InvoiceRepository repository, InvoiceVoucherRepository invoiceVoucherRepository,
                              CustomerVoucherUsageRepository customerVoucherUsageRepository,
+                             CustomerVoucherRepository customerVoucherRepository,
                              QueryExecutor queryExecutor,
                              BoughtProductService boughtProductService,
                              BoughtServiceItemService boughtServiceItemService,
@@ -78,6 +81,7 @@ public class InvoiceService extends BaseService<InvoiceRepository, Invoice, Inte
         super(repository, queryExecutor);
         this.invoiceVoucherRepository = invoiceVoucherRepository;
         this.customerVoucherUsageRepository = customerVoucherUsageRepository;
+        this.customerVoucherRepository = customerVoucherRepository;
         this.queryExecutor = queryExecutor;
         this.boughtProductService = boughtProductService;
         this.boughtServiceItemService = boughtServiceItemService;
@@ -137,7 +141,8 @@ public class InvoiceService extends BaseService<InvoiceRepository, Invoice, Inte
             orderItems = orderItemRepository.fetchOrderItemDetail(invoice.getOrderId());
             payments = paymentRepository.findAllByInvoiceId(id);
             String voucherCode = order == null ? invoice.getVoucherCode() : order.getVoucherCode();
-            if (voucherCode != null || invoice.getVoucherId() != null) {
+            if (voucherCode != null || invoice.getVoucherId() != null
+                    || order != null && order.getCustomerVoucherId() != null) {
                 voucher = new InvoiceResponse.VoucherSummary(voucherCode, invoice.getDiscount());
             }
         } else if (invoice.getVoucherCode() != null || invoice.getVoucherId() != null) {
@@ -273,11 +278,21 @@ public class InvoiceService extends BaseService<InvoiceRepository, Invoice, Inte
             orderRepository.updateStatusAndPayment(invoice.getOrderId(), OrderStatus.CANCELLED, PaymentStatus.UNPAID);
         }
         paymentRepository.cancelPendingByInvoice(invoiceId);
-        Integer voucherId = invoiceVoucherRepository.findVoucherIdByInvoice(invoiceId);
+        Integer customerVoucherUnderlyingId = customerVoucherRepository.findVoucherIdByInvoice(invoiceId);
+        List<Integer> voucherIds = invoiceVoucherRepository.findVoucherIdsByInvoice(invoiceId);
         Integer removed = invoiceVoucherRepository.deleteByInvoice(invoiceId);
         if (removed != null && removed > 0 && invoice.getCustomerId() != null) {
-            customerVoucherUsageRepository.decreaseUsage(voucherId, invoice.getCustomerId());
+            boolean skippedRedeemedVoucher = false;
+            for (Integer voucherId : voucherIds) {
+                if (!skippedRedeemedVoucher && customerVoucherUnderlyingId != null
+                        && customerVoucherUnderlyingId.equals(voucherId)) {
+                    skippedRedeemedVoucher = true;
+                    continue;
+                }
+                customerVoucherUsageRepository.decreaseUsage(voucherId, invoice.getCustomerId());
+            }
         }
+        customerVoucherRepository.releaseByInvoice(invoiceId);
         bumpDashboardRevenueVersion(invoice.getBranchId());
         return updated;
     }

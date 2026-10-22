@@ -21,6 +21,7 @@ public class CheckoutRequest {
     private String note;
     private Integer branchId;
     private Integer customerId;
+    private Long customerVoucherId;
 
     public void validate() {
         if (items == null || items.isEmpty()) throw new AppException(ErrorCode.INPUT_WRONG);
