@@ -26,8 +26,9 @@ public class PaymentExpiryJob {
             try {
                 paymentService.syncFromPayosForExpiry(payment);
             } catch (Exception ex) {
-                log.warn("PayOS expiry sync failed; leaving invoice {} unchanged (payment {}, orderCode {})",
-                        payment.getInvoiceId(), payment.getId(), payment.getOrderCode(), ex);
+                log.warn("PayOS expiry sync failed; leaving invoice {} unchanged (payment {}, orderCode {}): {}",
+                        payment.getInvoiceId(), payment.getId(), payment.getOrderCode(), ex.getMessage());
+                log.debug("PayOS expiry sync failure detail", ex);
             }
         }
     }

@@ -225,10 +225,15 @@ public class PaymentService {
 
     @Transactional
     public PaymentStatusResponse syncFromPayos(String orderCode, Integer userId) {
-        long code;
-        try { code = Long.parseLong(orderCode); }
-        catch (NumberFormatException ex) { throw new IllegalArgumentException("Mã đơn hàng không hợp lệ", ex); }
-        Payment payment = paymentRepository.findByPayosOrderCode(code);
+        if (orderCode == null || orderCode.isBlank()) throw new AppException(ErrorCode.DATA_NOT_FOUND);
+        // Accepts the numeric PayOS orderCode (return URL) or the shop order code (ORD...) returned by checkout.
+        Payment payment;
+        if (orderCode.chars().allMatch(Character::isDigit)) {
+            try { payment = paymentRepository.findByPayosOrderCode(Long.parseLong(orderCode)); }
+            catch (NumberFormatException ex) { throw new AppException(ErrorCode.DATA_NOT_FOUND); }
+        } else {
+            payment = paymentRepository.findLatestPayosByOrderCode(orderCode.trim());
+        }
         if (payment == null) throw new AppException(ErrorCode.DATA_NOT_FOUND);
         Invoice invoice = invoiceRepository.getById(payment.getInvoiceId());
         if (invoice == null) throw new AppException(ErrorCode.DATA_NOT_FOUND);

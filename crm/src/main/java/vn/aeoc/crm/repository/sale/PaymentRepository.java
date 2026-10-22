@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 
 import static vn.entity.backend.tables.Payment.PAYMENT;
 import static vn.entity.backend.tables.Invoice.INVOICE;
+import static vn.entity.backend.tables.Order.ORDER;
 
 @Repository
 public class PaymentRepository {
@@ -40,6 +41,16 @@ public class PaymentRepository {
                 .where(PAYMENT.ORDER_CODE.eq(orderCode))
                 .fetchOptionalInto(Payment.class)
                 .orElse(null);
+    }
+
+    public Payment findLatestPayosByOrderCode(String orderCode) {
+        return dsl.select(PAYMENT.fields())
+                .from(PAYMENT)
+                .join(ORDER).on(ORDER.ID.eq(PAYMENT.ORDER_ID))
+                .where(ORDER.CODE.eq(orderCode), PAYMENT.ORDER_CODE.isNotNull())
+                .orderBy(PAYMENT.ID.desc())
+                .limit(1)
+                .fetchOneInto(Payment.class);
     }
 
     public List<Payment> findExpiredPendingPayos(LocalDateTime expiredBefore) {
